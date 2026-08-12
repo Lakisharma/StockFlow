@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Scan Sessions | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Barcode Scan Sessions</h1>
+            <div class="page-subtitle">Batch audit logs of warehouse scanning sessions, stock counts, & receipt verifications</div>
+        </div>
+    </div>
+
+    <!-- Sessions Table -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Session ID</th>
+                    <th>User</th>
+                    <th>Warehouse</th>
+                    <th>Scan Mode</th>
+                    <th>Start Time</th>
+                    <th>Total Scans</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sessions %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ s.session_number }}</td>
+                    <td style="font-weight: 700;">{{ s.user.username }}</td>
+                    <td>{{ s.warehouse.name }}</td>
+                    <td><span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary-color); padding: 3px 8px;">{{ s.get_scan_mode_display }}</span></td>
+                    <td>{{ s.start_time|date:"d M Y H:i" }}</td>
+                    <td style="font-weight: 800;">{{ s.total_scans }}</td>
+                    <td>
+                        <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #16a34a; padding: 3px 8px;">{{ s.get_status_display }}</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No scan sessions recorded.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,562 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Dashboard</h1>
+            <div class="page-subtitle">Real-time warehouse metrics and operations overview</div>
+        </div>
+        <!-- Quick Action Button -->
+        <button class="page-actions-btn">
+            <span class="material-icons-round">cloud_upload</span>
+            <span>Upload Purchase Invoice</span>
+        </button>
+    </div>
+
+    <!-- STATS CARDS GRID -->
+    <div class="dashboard-grid-cards">
+        <!-- Card 1: Total Products -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Total Products</span>
+                <span class="stat-card-value">1,248</span>
+                <span class="stat-card-trend trend-up">
+                    <span class="material-icons-round">trending_up</span>
+                    <span>+12.4% this month</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-primary">
+                <span class="material-icons-round">category</span>
+            </div>
+        </div>
+
+        <!-- Card 2: Total Categories -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Total Categories</span>
+                <span class="stat-card-value">42</span>
+                <span class="stat-card-trend">
+                    <span class="material-icons-round">horizontal_rule</span>
+                    <span>No change</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-success">
+                <span class="material-icons-round">layers</span>
+            </div>
+        </div>
+
+        <!-- Card 3: Total Suppliers -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Total Suppliers</span>
+                <span class="stat-card-value">84</span>
+                <span class="stat-card-trend trend-up">
+                    <span class="material-icons-round">trending_up</span>
+                    <span>+4.2% this month</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-primary">
+                <span class="material-icons-round">local_shipping</span>
+            </div>
+        </div>
+
+        <!-- Card 4: Total Inventory -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Total Inventory</span>
+                <span class="stat-card-value">18,920</span>
+                <span class="stat-card-trend trend-up">
+                    <span class="material-icons-round">trending_up</span>
+                    <span>+8.1% vs last week</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-success">
+                <span class="material-icons-round">inventory_2</span>
+            </div>
+        </div>
+
+        <!-- Card 5: Inventory Value -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Inventory Value</span>
+                <span class="stat-card-value">$248,530</span>
+                <span class="stat-card-trend trend-up">
+                    <span class="material-icons-round">trending_up</span>
+                    <span>+5.3% this month</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-primary">
+                <span class="material-icons-round">attach_money</span>
+            </div>
+        </div>
+
+        <!-- Card 6: Today's Purchases -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Today's Purchases</span>
+                <span class="stat-card-value">$14,210</span>
+                <span class="stat-card-trend trend-down">
+                    <span class="material-icons-round">trending_down</span>
+                    <span>-2.1% vs yesterday</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-success">
+                <span class="material-icons-round">shopping_bag</span>
+            </div>
+        </div>
+
+        <!-- Card 7: Low Stock Alerts -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Low Stock</span>
+                <span class="stat-card-value">12</span>
+                <span class="stat-card-trend trend-down" style="color: var(--warning-color);">
+                    <span class="material-icons-round">report_problem</span>
+                    <span>Requires attention</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-warning">
+                <span class="material-icons-round">error_outline</span>
+            </div>
+        </div>
+
+        <!-- Card 8: Out of Stock -->
+        <div class="stat-card">
+            <div class="stat-card-info">
+                <span class="stat-card-title">Out of Stock</span>
+                <span class="stat-card-value">3</span>
+                <span class="stat-card-trend trend-down">
+                    <span class="material-icons-round">gpp_maybe</span>
+                    <span>Critical issues</span>
+                </span>
+            </div>
+            <div class="stat-card-icon icon-danger">
+                <span class="material-icons-round">dangerous</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS SECTION GRID -->
+    <div class="dashboard-grid-charts">
+        <!-- Monthly Purchases Line Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Monthly Purchases ($)</h3>
+                <span class="material-icons-round text-muted" style="cursor: pointer;">more_vert</span>
+            </div>
+            <div class="chart-body" id="monthlyPurchaseChart"></div>
+        </div>
+
+        <!-- Inventory Status Pie Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Inventory Status</h3>
+                <span class="material-icons-round text-muted" style="cursor: pointer;">more_vert</span>
+            </div>
+            <div class="chart-body" id="inventoryStatusChart"></div>
+        </div>
+
+        <!-- Top Selling/Moving Products -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Top Products by Volume</h3>
+                <span class="material-icons-round text-muted" style="cursor: pointer;">more_vert</span>
+            </div>
+            <div class="chart-body" id="topProductsChart"></div>
+        </div>
+
+        <!-- Stock Movement Spline Area Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Stock Movement Trend</h3>
+                <span class="material-icons-round text-muted" style="cursor: pointer;">more_vert</span>
+            </div>
+            <div class="chart-body" id="stockMovementChart"></div>
+        </div>
+    </div>
+
+    <!-- BOTTOM GRID (Tables, Recent Activities, Notifications) -->
+    <div class="dashboard-grid-bottom">
+        <!-- Recent Purchases Table -->
+        <div class="table-card">
+            <div class="chart-header" style="margin-bottom: 15px;">
+                <h3 class="chart-title">Recent Purchase Invoices</h3>
+                <button class="page-actions-btn" style="padding: 6px 12px; font-size: 0.8rem; background-color: var(--primary-light); color: var(--primary-color);">
+                    View All
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice No</th>
+                            <th>Supplier</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>#INV-2026-004</strong></td>
+                            <td>Apex Global Ltd</td>
+                            <td>Aug 07, 2026</td>
+                            <td>$4,210.00</td>
+                            <td>
+                                <span class="badge badge-success">
+                                    <span class="badge-dot"></span>
+                                    completed
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>#INV-2026-003</strong></td>
+                            <td>Zenith Trading Co</td>
+                            <td>Aug 06, 2026</td>
+                            <td>$8,400.00</td>
+                            <td>
+                                <span class="badge badge-warning">
+                                    <span class="badge-dot"></span>
+                                    pending
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>#INV-2026-002</strong></td>
+                            <td>Prime Logistics Inc</td>
+                            <td>Aug 05, 2026</td>
+                            <td>$1,540.00</td>
+                            <td>
+                                <span class="badge badge-success">
+                                    <span class="badge-dot"></span>
+                                    completed
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>#INV-2026-001</strong></td>
+                            <td>MedLink Distributors</td>
+                            <td>Aug 04, 2026</td>
+                            <td>$11,600.00</td>
+                            <td>
+                                <span class="badge badge-danger">
+                                    <span class="badge-dot"></span>
+                                    cancelled
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Activities and System Alerts column -->
+        <div class="side-cards-column">
+            <!-- Recent Activities -->
+            <div class="side-card">
+                <h3 class="chart-title">Recent Activities</h3>
+                <ul class="activity-list">
+                    <li class="activity-item">
+                        <div class="activity-icon icon-success">
+                            <span class="material-icons-round">add</span>
+                        </div>
+                        <div class="activity-content">
+                            <span class="activity-title">New Product Added</span>
+                            <span class="activity-desc">Standard A4 printer paper added to inventory.</span>
+                            <span class="activity-time">5 mins ago</span>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon icon-primary">
+                            <span class="material-icons-round">local_shipping</span>
+                        </div>
+                        <div class="activity-content">
+                            <span class="activity-title">Supplier Details Updated</span>
+                            <span class="activity-desc">Apex Global Ltd contact person updated.</span>
+                            <span class="activity-time">45 mins ago</span>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon icon-warning">
+                            <span class="material-icons-round">cloud_upload</span>
+                        </div>
+                        <div class="activity-content">
+                            <span class="activity-title">Invoice Auto-Processed</span>
+                            <span class="activity-desc">Invoice #INV-2026-003 uploaded and scanned.</span>
+                            <span class="activity-time">2 hours ago</span>
+                        </div>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon icon-danger">
+                            <span class="material-icons-round">sync</span>
+                        </div>
+                        <div class="activity-content">
+                            <span class="activity-title">Stock Level Updated</span>
+                            <span class="activity-desc">Item 'iPhone 15 Pro' stock count reduced.</span>
+                            <span class="activity-time">4 hours ago</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Notifications & Alerts Panel -->
+            <div class="side-card">
+                <h3 class="chart-title">System Alerts</h3>
+                <ul class="alert-list">
+                    <li class="alert-item alert-danger">
+                        <span class="material-icons-round alert-item-icon">dangerous</span>
+                        <div class="alert-content">
+                            <span class="alert-message">Item <strong>Detergent Pack x50</strong> is out of stock.</span>
+                            <span class="alert-time">10 mins ago</span>
+                        </div>
+                    </li>
+                    <li class="alert-item alert-warning">
+                        <span class="material-icons-round alert-item-icon">report_problem</span>
+                        <div class="alert-content">
+                            <span class="alert-message">Standard printer toner cartridge is low in stock (Qty: 2).</span>
+                            <span class="alert-time">1 hour ago</span>
+                        </div>
+                    </li>
+                    <li class="alert-item alert-success">
+                        <span class="material-icons-round alert-item-icon">check_circle</span>
+                        <div class="alert-content">
+                            <span class="alert-message">Database backup scheduled successfully.</span>
+                            <span class="alert-time">12 hours ago</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include ApexCharts Library -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Universal options helper for dark mode theme matching
+        const isDarkMode = () => document.body.classList.contains('dark-mode');
+        
+        const getThemeColors = () => {
+            return {
+                text: isDarkMode() ? '#94a3b8' : '#64748b',
+                grid: isDarkMode() ? '#334155' : '#e2e8f0'
+            };
+        };
+
+        // 1. Monthly Purchase Chart
+        var monthlyPurchaseOptions = {
+            series: [{
+                name: 'Purchases',
+                data: [31000, 40000, 28000, 51000, 42000, 62000, 58000]
+            }],
+            chart: {
+                type: 'area',
+                height: 300,
+                toolbar: { show: false },
+                zoom: { enabled: false }
+            },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.45,
+                    opacityTo: 0.05,
+                    stops: [0, 90, 100]
+                }
+            },
+            colors: ['#2563eb'],
+            xaxis: {
+                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                labels: { style: { colors: getThemeColors().text } }
+            },
+            yaxis: {
+                labels: { style: { colors: getThemeColors().text } }
+            },
+            grid: {
+                borderColor: getThemeColors().grid,
+                strokeDashArray: 4
+            },
+            tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+        };
+        var monthlyPurchaseChart = new ApexCharts(document.querySelector("#monthlyPurchaseChart"), monthlyPurchaseOptions);
+        monthlyPurchaseChart.render();
+
+        // 2. Inventory Status Chart (Doughnut)
+        var inventoryStatusOptions = {
+            series: [12400, 4120, 2400],
+            labels: ['Available', 'Reserved', 'Damaged'],
+            chart: {
+                type: 'donut',
+                height: 300
+            },
+            colors: ['#10b981', '#f59e0b', '#ef4444'],
+            stroke: { width: 0 },
+            legend: {
+                position: 'bottom',
+                labels: { colors: getThemeColors().text }
+            },
+            dataLabels: { enabled: false },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '72%',
+                        labels: {
+                            show: true,
+                            name: {
+                                show: true,
+                                style: { color: getThemeColors().text }
+                            },
+                            value: {
+                                show: true,
+                                style: { color: isDarkMode() ? '#ffffff' : '#1e293b', fontSize: '1.3rem', fontWeight: 'bold' }
+                            },
+                            total: {
+                                show: true,
+                                label: 'Total Stock',
+                                color: getThemeColors().text,
+                                formatter: function (w) {
+                                    return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+        };
+        var inventoryStatusChart = new ApexCharts(document.querySelector("#inventoryStatusChart"), inventoryStatusOptions);
+        inventoryStatusChart.render();
+
+        // 3. Top Products Chart (Bar)
+        var topProductsOptions = {
+            series: [{
+                name: 'Volume',
+                data: [440, 320, 210, 180, 160]
+            }],
+            chart: {
+                type: 'bar',
+                height: 300,
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 6,
+                    horizontal: true,
+                    barHeight: '50%'
+                }
+            },
+            colors: ['#2563eb'],
+            dataLabels: { enabled: false },
+            xaxis: {
+                categories: ['A4 Paper', 'Cardboard Box', 'Printer Toner', 'Cleaning Spray', 'Detergent Pack'],
+                labels: { style: { colors: getThemeColors().text } }
+            },
+            yaxis: {
+                labels: { style: { colors: getThemeColors().text } }
+            },
+            grid: {
+                borderColor: getThemeColors().grid,
+                strokeDashArray: 4
+            },
+            tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+        };
+        var topProductsChart = new ApexCharts(document.querySelector("#topProductsChart"), topProductsOptions);
+        topProductsChart.render();
+
+        // 4. Stock Movement Chart (Area)
+        var stockMovementOptions = {
+            series: [
+                { name: 'Stock In', data: [310, 400, 280, 510, 420, 109, 100] },
+                { name: 'Stock Out', data: [110, 320, 450, 320, 340, 520, 410] }
+            ],
+            chart: {
+                type: 'area',
+                height: 300,
+                toolbar: { show: false }
+            },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 2 },
+            colors: ['#10b981', '#ef4444'],
+            xaxis: {
+                categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                labels: { style: { colors: getThemeColors().text } }
+            },
+            yaxis: {
+                labels: { style: { colors: getThemeColors().text } }
+            },
+            grid: {
+                borderColor: getThemeColors().grid,
+                strokeDashArray: 4
+            },
+            legend: {
+                position: 'top',
+                labels: { colors: getThemeColors().text }
+            },
+            tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+        };
+        var stockMovementChart = new ApexCharts(document.querySelector("#stockMovementChart"), stockMovementOptions);
+        stockMovementChart.render();
+
+        // Listen for theme toggle to update chart label colors
+        document.getElementById('themeToggleBtn').addEventListener('click', function() {
+            setTimeout(function() {
+                const colors = getThemeColors();
+                
+                // Update Monthly Purchase Chart
+                monthlyPurchaseChart.updateOptions({
+                    xaxis: { labels: { style: { colors: colors.text } } },
+                    yaxis: { labels: { style: { colors: colors.text } } },
+                    grid: { borderColor: colors.grid },
+                    tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+                });
+
+                // Update Inventory Status Chart
+                inventoryStatusChart.updateOptions({
+                    legend: { labels: { colors: colors.text } },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                labels: {
+                                    name: { style: { color: colors.text } },
+                                    value: { style: { color: isDarkMode() ? '#ffffff' : '#1e293b' } },
+                                    total: { color: colors.text }
+                                }
+                            }
+                        }
+                    },
+                    tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+                });
+
+                // Update Top Products Chart
+                topProductsChart.updateOptions({
+                    xaxis: { labels: { style: { colors: colors.text } } },
+                    yaxis: { labels: { style: { colors: colors.text } } },
+                    grid: { borderColor: colors.grid },
+                    tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+                });
+
+                // Update Stock Movement Chart
+                stockMovementChart.updateOptions({
+                    xaxis: { labels: { style: { colors: colors.text } } },
+                    yaxis: { labels: { style: { colors: colors.text } } },
+                    grid: { borderColor: colors.grid },
+                    legend: { labels: { colors: colors.text } },
+                    tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+                });
+            }, 100);
+        });
+    });
+</script>
+{% endblock %}

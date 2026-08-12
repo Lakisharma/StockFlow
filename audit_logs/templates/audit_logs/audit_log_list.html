@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}System Audit Logs & Activity Tracking | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">System Audit Logs & Activity Tracking</h1>
+            <div class="page-subtitle">Immutable server-side security audit trail monitoring activities across all 18 enterprise modules</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'audit-log-timeline' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">timeline</span>
+                <span>Timeline Feed</span>
+            </a>
+            <a href="{% url 'audit-log-export' %}" class="page-actions-btn" style="text-decoration: none;">
+                <span class="material-icons-round">download</span>
+                <span>Export CSV Report</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Audit Log KPI Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 8px; background-color: rgba(59, 130, 246, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">receipt_long</span>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total Activities</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">{{ metrics.total_activities }}</div>
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 8px; background-color: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">today</span>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Today's Activities</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">{{ metrics.today_activities }}</div>
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 8px; background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">login</span>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Today's Logins</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">{{ metrics.today_logins }}</div>
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 8px; background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">edit</span>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Today's Updates</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">{{ metrics.today_updates }}</div>
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 8px; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">delete_sweep</span>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Today's Deletions</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">{{ metrics.today_deletions }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: 12px; align-items: center;">
+            <input type="text" name="search" class="input-control" placeholder="Search user, description, record ID..." value="{{ search|default:'' }}">
+
+            <select name="date_range" class="input-control" onchange="this.form.submit()">
+                <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
+                <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+                <option value="yesterday" {% if date_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                <option value="this_week" {% if date_range == 'this_week' %}selected{% endif %}>This Week</option>
+                <option value="this_month" {% if date_range == 'this_month' %}selected{% endif %}>This Month</option>
+                <option value="last_month" {% if date_range == 'last_month' %}selected{% endif %}>Last Month</option>
+            </select>
+
+            <select name="user" class="input-control" onchange="this.form.submit()">
+                <option value="">All Users</option>
+                {% for u in users %}
+                <option value="{{ u.id }}" {% if user_filter == u.id|stringformat:"i" %}selected{% endif %}>{{ u.username }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="module" class="input-control" onchange="this.form.submit()">
+                <option value="">All Modules</option>
+                <option value="Authentication" {% if module_filter == 'Authentication' %}selected{% endif %}>Auth & Users</option>
+                <option value="Products" {% if module_filter == 'Products' %}selected{% endif %}>Products</option>
+                <option value="Purchases" {% if module_filter == 'Purchases' %}selected{% endif %}>Purchases</option>
+                <option value="Inventory" {% if module_filter == 'Inventory' %}selected{% endif %}>Inventory</option>
+                <option value="Stock Transfer" {% if module_filter == 'Stock Transfer' %}selected{% endif %}>Stock Transfer</option>
+                <option value="OCR" {% if module_filter == 'OCR' %}selected{% endif %}>AI OCR Scanner</option>
+                <option value="Backup & Restore" {% if module_filter == 'Backup & Restore' %}selected{% endif %}>Backup & Restore</option>
+            </select>
+
+            <select name="status" class="input-control" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                <option value="success" {% if status_filter == 'success' %}selected{% endif %}>Success</option>
+                <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                <option value="unauthorized" {% if status_filter == 'unauthorized' %}selected{% endif %}>Unauthorized</option>
+            </select>
+
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="page-actions-btn" style="padding: 8px 16px; font-size: 0.85rem;">Filter</button>
+                <a href="{% url 'audit-log-list' %}" class="btn-demo" style="text-decoration: none; padding: 8px 12px; font-size: 0.85rem;">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="side-card" style="padding: 20px;">
+        <div class="table-responsive">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">
+                        <th style="padding: 10px;">Log ID</th>
+                        <th style="padding: 10px;">Timestamp</th>
+                        <th style="padding: 10px;">User & Role</th>
+                        <th style="padding: 10px;">Action</th>
+                        <th style="padding: 10px;">Module</th>
+                        <th style="padding: 10px;">Description</th>
+                        <th style="padding: 10px;">Status</th>
+                        <th style="padding: 10px; text-align: right;">Inspector</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in page_obj %}
+                    <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.88rem;">
+                        <td style="padding: 12px 10px;">
+                            <a href="{% url 'audit-log-detail' log.id %}" style="font-weight: 700; color: var(--primary-color); text-decoration: none;">
+                                {{ log.log_id }}
+                            </a>
+                        </td>
+                        <td style="padding: 12px 10px; color: var(--text-muted); font-size: 0.82rem;">
+                            {{ log.timestamp|date:"d M Y, H:i:s" }}
+                        </td>
+                        <td style="padding: 12px 10px;">
+                            <div style="font-weight: 700; color: var(--text-main);">{% if log.user %}{{ log.user.username }}{% else %}System{% endif %}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">{{ log.user_role }}</div>
+                        </td>
+                        <td style="padding: 12px 10px;">
+                            <span class="badge" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; {% if 'Create' in log.action or 'Login' in log.action %}background-color: rgba(16, 185, 129, 0.15); color: #059669;{% elif 'Delete' in log.action %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% else %}background-color: rgba(59, 130, 246, 0.15); color: #2563eb;{% endif %}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td style="padding: 12px 10px; font-weight: 600; color: var(--text-main);">
+                            {{ log.module }}
+                        </td>
+                        <td style="padding: 12px 10px; color: var(--text-main); max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ log.description }}
+                        </td>
+                        <td style="padding: 12px 10px;">
+                            <span class="badge" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; {% if log.status == 'success' %}background-color: rgba(16, 185, 129, 0.15); color: #059669;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                                {{ log.get_status_display }}
+                            </span>
+                        </td>
+                        <td style="padding: 12px 10px; text-align: right;">
+                            <a href="{% url 'audit-log-detail' log.id %}" class="btn-demo" style="padding: 4px 10px; font-size: 0.8rem; text-decoration: none;">
+                                Inspect &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            No security audit log entries match the selected search criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if page_obj.has_other_pages %}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; font-size: 0.85rem;">
+            <div style="color: var(--text-muted);">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} log records
+            </div>
+            <div style="display: flex; gap: 6px;">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&date_range={{ date_range }}&search={{ search }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px;">&laquo; Prev</a>
+                {% endif %}
+                <span class="btn-demo" style="padding: 6px 12px; background-color: var(--primary-color); color: #fff;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&date_range={{ date_range }}&search={{ search }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px;">Next &raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

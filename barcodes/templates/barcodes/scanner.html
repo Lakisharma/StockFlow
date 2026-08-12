@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Barcode & QR Code Scanner | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Barcode & QR Code Scanner</h1>
+            <div class="page-subtitle">Real-time camera scanner & USB hardware barcode reader for instant product lookup and stock operations</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'barcode-labels' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">print</span>
+                <span>Print Labels</span>
+            </a>
+            <a href="{% url 'barcode-history' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">history</span>
+                <span>Scan History Log</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="side-card" style="padding: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="?mode=lookup" class="btn-demo" style="padding: 8px 16px; text-decoration: none; font-weight: 700; {% if mode == 'lookup' %}background-color: var(--primary-color); color: #fff;{% endif %}">Product Lookup</a>
+        <a href="?mode=stock_in" class="btn-demo" style="padding: 8px 16px; text-decoration: none; font-weight: 700; {% if mode == 'stock_in' %}background-color: var(--primary-color); color: #fff;{% endif %}">Stock In</a>
+        <a href="?mode=stock_out" class="btn-demo" style="padding: 8px 16px; text-decoration: none; font-weight: 700; {% if mode == 'stock_out' %}background-color: var(--primary-color); color: #fff;{% endif %}">Stock Out</a>
+        <a href="?mode=purchase" class="btn-demo" style="padding: 8px 16px; text-decoration: none; font-weight: 700; {% if mode == 'purchase' %}background-color: var(--primary-color); color: #fff;{% endif %}">Purchase Entry</a>
+        <a href="?mode=transfer" class="btn-demo" style="padding: 8px 16px; text-decoration: none; font-weight: 700; {% if mode == 'transfer' %}background-color: var(--primary-color); color: #fff;{% endif %}">Stock Transfer</a>
+        <a href="?mode=counting" class="btn-demo" style="padding: 8px 16px; text-decoration: none; font-weight: 700; {% if mode == 'counting' %}background-color: var(--primary-color); color: #fff;{% endif %}">Stock Counting</a>
+    </div>
+
+    <!-- Scanner Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Left: Camera Viewfinder & USB Input -->
+        <div class="side-card" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Camera & USB Hardware Scanner</h3>
+                <span class="badge" style="background-color: rgba(59, 130, 246, 0.15); color: #2563eb; padding: 4px 8px;">Active Mode: {{ mode|title }}</span>
+            </div>
+
+            <!-- Simulated Camera Viewfinder -->
+            <div id="scannerFrame" style="position: relative; width: 100%; height: 240px; background-color: #000; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 2px dashed #3b82f6;">
+                <div style="position: absolute; width: 80%; height: 60%; border: 2px solid #22c55e; border-radius: 6px; box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); display: flex; justify-content: center; align-items: center; color: #22c55e; font-weight: 700; font-size: 0.85rem;">
+                    [ ALIGN BARCODE INSIDE FRAME ]
+                </div>
+                <div style="color: #9ca3af; font-size: 0.85rem; z-index: 1;">
+                    Camera Viewfinder Ready (USB Keyboard Listener Active)
+                </div>
+            </div>
+
+            <!-- Manual Barcode / USB Scanner Input -->
+            <form method="GET" style="display: flex; gap: 10px;">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                <input type="text" name="barcode" id="barcodeInput" class="input-control" placeholder="Scan with USB Scanner or enter barcode/SKU..." value="{{ query|default:'' }}" autofocus style="font-family: monospace; font-size: 1.05rem; font-weight: 700;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Search</button>
+            </form>
+        </div>
+
+        <!-- Right: Scan Result & Multi-Godown Stock Breakdown -->
+        <div class="side-card" style="padding: 24px; display: flex; flex-direction: column; gap: 15px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Scan Result Details</h3>
+
+            {% if scan_result %}
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                    <div>
+                        <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);">{{ scan_result.product.name }}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">SKU: {{ scan_result.product.sku }} | Barcode: {{ scan_result.product.barcode|default:scan_result.product.sku }}</div>
+                    </div>
+                    <span class="badge" style="background-color: rgba(34, 197, 94, 0.15); color: #16a34a; font-size: 0.8rem; padding: 4px 10px;">Product Found</span>
+                </div>
+
+                <!-- Product Attributes -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 0.85rem;">
+                    <div>Category: <strong>{{ scan_result.product.category.name|default:'N/A' }}</strong></div>
+                    <div>Brand: <strong>{{ scan_result.product.brand.name|default:'N/A' }}</strong></div>
+                    <div>Unit: <strong>{{ scan_result.product.unit.name|default:'N/A' }}</strong></div>
+                </div>
+
+                <!-- Multi-Godown Stock Breakdown -->
+                <div style="margin-top: 10px;">
+                    <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Stock Across Warehouses</h4>
+                    <table class="data-table" style="font-size: 0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Warehouse</th>
+                                <th>Quantity</th>
+                                <th>Min / Max</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ws in scan_result.warehouse_stocks %}
+                            <tr>
+                                <td style="font-weight: 700;">{{ ws.warehouse_name }}</td>
+                                <td style="font-weight: 800; font-size: 0.95rem;">{{ ws.quantity }}</td>
+                                <td style="color: var(--text-muted);">{{ ws.min_stock_level }} / {{ ws.max_stock_level }}</td>
+                                <td>
+                                    <span class="badge" style="padding: 2px 6px; font-size: 0.72rem; {% if ws.status == 'Out of Stock' %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% elif ws.status == 'Low Stock' %}background-color: rgba(245, 158, 11, 0.15); color: #d97706;{% else %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% endif %}">
+                                        {{ ws.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-muted);">No warehouse stock records configured yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <a href="{% url 'barcode-generator' scan_result.product.id %}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem;">View Barcode & QR</a>
+                    <a href="{% url 'create-purchase' %}" class="page-actions-btn" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem;">Create Purchase</a>
+                    <a href="{% url 'create-transfer' %}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem;">Transfer Stock</a>
+                </div>
+            </div>
+            {% elif query %}
+            <div style="text-align: center; padding: 30px; color: #dc2626;">
+                <span class="material-icons-round" style="font-size: 48px; margin-bottom: 10px;">error_outline</span>
+                <div style="font-size: 1.1rem; font-weight: 800;">Product Not Found</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">No product matches barcode or SKU '{{ query }}'.</div>
+                <div style="margin-top: 15px;">
+                    <a href="{% url 'product-create' %}" class="page-actions-btn" style="text-decoration: none; padding: 8px 16px;">Create New Product</a>
+                </div>
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                <span class="material-icons-round" style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">qr_code_scanner</span>
+                <div>Scan a product barcode or type SKU to view live inventory & stock details across godowns.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

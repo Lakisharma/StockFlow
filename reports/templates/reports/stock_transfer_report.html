@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock Transfer Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Stock Transfer Report</h1>
+            <div class="page-subtitle">Inter-warehouse transfer logs, status tracking, and dispatch audit</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 16px;">Print</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Transfer #</th>
+                        <th>Date</th>
+                        <th>From Warehouse</th>
+                        <th>To Warehouse</th>
+                        <th style="text-align: center;">Products</th>
+                        <th style="text-align: center;">Total Qty</th>
+                        <th style="text-align: center;">Status</th>
+                        <th>Requested By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transfers %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'transfer-detail' t.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">{{ t.transfer_number }}</a>
+                        </td>
+                        <td>{{ t.transfer_date|date:"M d, Y" }}</td>
+                        <td><strong>{{ t.from_warehouse.name }}</strong></td>
+                        <td><strong>{{ t.to_warehouse.name }}</strong></td>
+                        <td style="text-align: center;">{{ t.total_products }}</td>
+                        <td style="text-align: center; font-weight: 700;">{{ t.total_quantity }}</td>
+                        <td style="text-align: center;"><span class="badge badge-info">{{ t.get_status_display }}</span></td>
+                        <td style="font-size: 0.82rem;">{{ t.requested_by.username|default:"System" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No stock transfer records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

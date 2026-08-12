@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Category | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="category-delete-content" style="max-width: 600px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <h1 class="page-title">Delete Category</h1>
+            <div class="page-subtitle">Confirm category removal</div>
+        </div>
+    </div>
+
+    <!-- Confirm Card -->
+    <div class="side-card" style="padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        <div class="icon-danger" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--danger-color); background-color: var(--danger-light);">
+            <span class="material-icons-round" style="font-size: 36px;">warning</span>
+        </div>
+
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Confirm Deletion</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 450px;">
+            Are you sure you want to delete category <strong>"{{ object.name }}"</strong> with code <strong>"{{ object.code }}"</strong>?
+            <br>
+            This action cannot be undone.
+        </p>
+
+        <!-- Form -->
+        <form method="POST" style="width: 100%; display: flex; justify-content: center; gap: 15px; margin-top: 15px;">
+            {% csrf_token %}
+            <a href="{% url 'category-list' %}" class="btn-demo" style="text-decoration: none; padding: 12px 24px;">
+                Cancel
+            </a>
+            <button type="submit" class="page-actions-btn" style="background-color: var(--danger-color); padding: 12px 24px;">
+                <span class="material-icons-round" style="font-size: 18px;">delete</span>
+                <span>Confirm Delete</span>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

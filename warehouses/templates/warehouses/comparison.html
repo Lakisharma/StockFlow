@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Multi-Warehouse Comparison | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Multi-Warehouse Performance Comparison</h1>
+            <div class="page-subtitle">Comparative matrix of sales revenue, purchases, expenses, inventory value, and net profit across godowns</div>
+        </div>
+    </div>
+
+    <!-- Comparison Table Card -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr style="background: var(--bg-hover);">
+                    <th>Warehouse Name</th>
+                    <th>Code</th>
+                    <th>Stock Units</th>
+                    <th>Inventory Value (₹)</th>
+                    <th>Sales Revenue (₹)</th>
+                    <th>Purchases (₹)</th>
+                    <th>Expenses (₹)</th>
+                    <th>Net Profit (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in matrix %}
+                <tr>
+                    <td style="font-weight: 800; color: var(--text-main);">{{ m.warehouse.name }}</td>
+                    <td style="font-family: monospace;">{{ m.warehouse.code }}</td>
+                    <td style="font-weight: 800;">{{ m.stock_qty }}</td>
+                    <td style="font-weight: 700; color: #8b5cf6;">₹{{ m.inventory_value|floatformat:2 }}</td>
+                    <td style="font-weight: 700; color: #16a34a;">₹{{ m.sales|floatformat:2 }}</td>
+                    <td style="color: #dc2626;">₹{{ m.purchases|floatformat:2 }}</td>
+                    <td style="color: #d97706;">₹{{ m.expenses|floatformat:2 }}</td>
+                    <td style="font-weight: 800; color: {% if m.net_profit >= 0 %}#16a34a{% else %}#dc2626{% endif %};">₹{{ m.net_profit|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No warehouse comparative data available.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

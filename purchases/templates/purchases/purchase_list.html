@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchase Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="purchase-list-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Purchase Bills</h1>
+            <div class="page-subtitle">Track, inspect, and approve supplier purchase transactions and payments</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'purchase-add' %}" class="page-actions-btn" style="text-decoration: none;">
+                <span class="material-icons-round">add</span>
+                <span>Create Purchase</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="side-card" style="margin-bottom: 25px; padding: 20px;">
+        <form method="GET" class="row g-3 align-items-center" id="filterForm" style="display: flex; flex-wrap: wrap; gap: 12px; width: 100%;">
+            <!-- Search -->
+            <div class="nav-search-bar" style="width: 250px; max-width: 100%;">
+                <span class="material-icons-round nav-search-icon">search</span>
+                <input class="nav-search-input" type="text" name="q" value="{{ q }}" placeholder="Search Invoice, Supplier, Product...">
+            </div>
+
+            <!-- Supplier Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="supplierFilter">Supplier:</label>
+                <select name="supplier" id="supplierFilter" class="input-control" style="width: 150px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all">All Suppliers</option>
+                    {% for s in suppliers %}
+                        <option value="{{ s.id }}" {% if selected_supplier == s.id|stringformat:"i" %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Warehouse Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="warehouseFilter">Warehouse:</label>
+                <select name="warehouse" id="warehouseFilter" class="input-control" style="width: 140px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all">All Warehouses</option>
+                    {% for w in warehouses %}
+                        <option value="{{ w.id }}" {% if selected_warehouse == w.id|stringformat:"i" %}selected{% endif %}>{{ w.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="statusFilter">Status:</label>
+                <select name="status" id="statusFilter" class="input-control" style="width: 110px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="draft" {% if selected_status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="received" {% if selected_status == 'received' %}selected{% endif %}>Received</option>
+                    <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="returned" {% if selected_status == 'returned' %}selected{% endif %}>Returned</option>
+                </select>
+            </div>
+
+            <!-- Payment Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="paymentFilter">Payment:</label>
+                <select name="payment_status" id="paymentFilter" class="input-control" style="width: 120px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all" {% if selected_payment_status == 'all' %}selected{% endif %}>All Payments</option>
+                    <option value="paid" {% if selected_payment_status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="partial" {% if selected_payment_status == 'partial' %}selected{% endif %}>Partially Paid</option>
+                    <option value="pending" {% if selected_payment_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="overdue" {% if selected_payment_status == 'overdue' %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
+
+            <!-- Export & Refresh Buttons -->
+            <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
+                <a href="{% url 'purchase-list' %}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-icons-round" style="font-size: 16px;">refresh</span>
+                    <span>Refresh</span>
+                </a>
+                <a href="?q={{ q }}&supplier={{ selected_supplier }}&warehouse={{ selected_warehouse }}&status={{ selected_status }}&payment_status={{ selected_payment_status }}&sort={{ sort }}&export=csv" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-icons-round" style="font-size: 16px;">download</span>
+                    <span>Export CSV</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="custom-table" id="purchaseTable">
+                <thead>
+                    <tr>
+                        <th>Invoice Number</th>
+                        <th>Supplier</th>
+                        <th>Warehouse</th>
+                        <th>Purchase Date</th>
+                        <th>Grand Total</th>
+                        <th>Paid</th>
+                        <th>Pending</th>
+                        <th>Payment Status</th>
+                        <th>Purchase Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in purchases %}
+                    <tr>
+                        <td style="vertical-align: middle;">
+                            <a href="{% url 'purchase-detail' p.id %}" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">
+                                {{ p.invoice_number }}
+                            </a>
+                            {% if p.purchase_order_number %}
+                                <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 2px;">
+                                    PO: <code>{{ p.purchase_order_number }}</code>
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="vertical-align: middle; font-weight: 500;">{{ p.supplier.name }}</td>
+                        <td style="vertical-align: middle;">{{ p.warehouse.name }}</td>
+                        <td style="vertical-align: middle; white-space: nowrap;">{{ p.purchase_date|date:"M d, Y" }}</td>
+                        <td style="vertical-align: middle; font-weight: 700;">${{ p.grand_total|floatformat:2 }}</td>
+                        <td style="vertical-align: middle; color: var(--success-color); font-weight: 600;">${{ p.paid_amount|floatformat:2 }}</td>
+                        <td style="vertical-align: middle; color: var(--danger-color); font-weight: 600;">${{ p.pending_amount|floatformat:2 }}</td>
+                        <td style="vertical-align: middle;">
+                            {% if p.payment_status == 'paid' %}
+                                <span class="badge badge-success">Paid</span>
+                            {% elif p.payment_status == 'partial' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Partial</span>
+                            {% elif p.payment_status == 'overdue' %}
+                                <span class="badge badge-danger">Overdue</span>
+                            {% else %}
+                                <span class="badge badge-danger" style="background-color: var(--border-color); color: var(--text-muted);">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="vertical-align: middle;">
+                            {% if p.status == 'draft' %}
+                                <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">Draft</span>
+                            {% elif p.status == 'pending' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Pending</span>
+                            {% elif p.status == 'received' %}
+                                <span class="badge badge-info">Received</span>
+                            {% elif p.status == 'completed' %}
+                                <span class="badge badge-success">Completed</span>
+                            {% elif p.status == 'cancelled' %}
+                                <span class="badge badge-danger">Cancelled</span>
+                            {% elif p.status == 'returned' %}
+                                <span class="badge badge-danger" style="background-color: var(--danger-light); color: var(--danger-color);">Returned</span>
+                            {% endif %}
+                        </td>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; gap: 6px;">
+                                <a href="{% url 'purchase-detail' p.id %}" class="nav-action-btn" title="View Details" style="width: 30px; height: 30px;">
+                                    <span class="material-icons-round" style="font-size: 16px;">visibility</span>
+                                </a>
+                                {% if p.status == 'draft' or p.status == 'pending' %}
+                                <a href="{% url 'purchase-edit' p.id %}" class="nav-action-btn" title="Edit Purchase" style="width: 30px; height: 30px; color: var(--warning-color);">
+                                    <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'purchase-delete' p.id %}" class="nav-action-btn" title="Cancel / Delete" style="width: 30px; height: 30px; color: var(--danger-color);">
+                                    <span class="material-icons-round" style="font-size: 16px;">cancel</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; margin-bottom: 12px; display: block;">receipt_long</span>
+                            No purchase transactions found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Section -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; flex-wrap: wrap; gap: 15px;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&supplier={{ selected_supplier }}&warehouse={{ selected_warehouse }}&status={{ selected_status }}&payment_status={{ selected_payment_status }}&sort={{ sort }}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                        <span class="material-icons-round" style="font-size: 18px;">chevron_left</span>
+                        <span>Previous</span>
+                    </a>
+                {% endif %}
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&supplier={{ selected_supplier }}&warehouse={{ selected_warehouse }}&status={{ selected_status }}&payment_status={{ selected_payment_status }}&sort={{ sort }}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                        <span>Next</span>
+                        <span class="material-icons-round" style="font-size: 18px;">chevron_right</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Serial Number Registry | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'batch-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Batches</a>
+            </div>
+            <h1 class="page-title">Serial Number Registry</h1>
+            <div class="page-subtitle">Track individual product serial numbers, warranty validity, and warehouse assignment status</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: flex; gap: 12px;">
+            <input type="text" name="search" class="input-control" placeholder="Search serial number, product name, or SKU..." value="{{ search|default:'' }}" style="font-family: monospace;">
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Search Serial</button>
+            <a href="{% url 'serial-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Reset</a>
+        </form>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Serial Number</th>
+                    <th>Product</th>
+                    <th>Warehouse</th>
+                    <th>Batch Number</th>
+                    <th>Status</th>
+                    <th>Warranty Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in serials %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ s.serial_number }}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">{{ s.product.name }}</td>
+                    <td>{{ s.warehouse.name|default:'N/A' }}</td>
+                    <td style="font-family: monospace;">{{ s.batch.batch_number|default:'N/A' }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if s.status == 'in_stock' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif s.status == 'sold' %}background-color: rgba(59, 130, 246, 0.15); color: #2563eb;{% else %}background-color: rgba(245, 158, 11, 0.15); color: #d97706;{% endif %}">
+                            {{ s.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if s.warranty_status == 'Active' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background-color: rgba(156, 163, 175, 0.15); color: #4b5563;{% endif %}">
+                            {{ s.warranty_status }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'serial-detail' s.id %}" class="btn-demo" style="text-decoration: none; padding: 4px 10px; font-size: 0.78rem;">Inspect Details</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No product serial numbers registered in system.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

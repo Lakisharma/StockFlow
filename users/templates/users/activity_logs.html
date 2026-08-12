@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Global User Activity Audit Logs | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Global User Activity Audit Trail</h1>
+            <div class="page-subtitle">Real-time security audit log recording user actions across all modules</div>
+        </div>
+        <a href="{% url 'user-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Users</a>
+    </div>
+
+    <!-- Activity Log Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Module</th>
+                        <th>Action Performed</th>
+                        <th>Reference #</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="font-size: 0.82rem; color: var(--text-muted);">{{ log.timestamp|date:"M d, Y H:i:s" }}</td>
+                        <td>
+                            {% if log.user %}
+                                <a href="{% url 'user-detail' log.user.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">{{ log.user.username }}</a>
+                            {% else %}
+                                <span style="color: var(--text-muted);">System</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ log.module }}</span></td>
+                        <td><strong>{{ log.action }}</strong></td>
+                        <td><code>{{ log.reference|default:"-" }}</code></td>
+                        <td style="font-size: 0.8rem; color: var(--text-muted);">{{ log.ip_address|default:"127.0.0.1" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">No activity logs recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configure Warehouse | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="warehouse-form-content" style="max-width: 1000px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <h1 class="page-title">{{ title }}</h1>
+            <div class="page-subtitle">Configure warehouse storage volumes, managers, capacity units, and operational constraints</div>
+        </div>
+        <a href="{% url 'warehouse-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round">arrow_back</span>
+            <span>Back to List</span>
+        </a>
+    </div>
+
+    <!-- Multi-Section Form Card -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <!-- Tab Headers -->
+        <div class="form-tab-nav">
+            <button type="button" class="form-tab-btn active" onclick="switchFormTab('basicInfoTab', this)">
+                <span class="material-icons-round" style="font-size: 18px;">info</span>
+                <span>1. Basic Info</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('contactTab', this)">
+                <span class="material-icons-round" style="font-size: 18px;">contact_phone</span>
+                <span>2. Contact</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('addressTab', this)">
+                <span class="material-icons-round" style="font-size: 18px;">home</span>
+                <span>3. Address</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('capacityTab', this)">
+                <span class="material-icons-round" style="font-size: 18px;">space_dashboard</span>
+                <span>4. Capacity</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('additionalTab', this)">
+                <span class="material-icons-round" style="font-size: 18px;">more_horiz</span>
+                <span>5. Additional</span>
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <form method="POST" enctype="multipart/form-data" id="warehouseSubmitForm" style="padding: 30px; display: flex; flex-direction: column; gap: 20px;">
+            {% csrf_token %}
+
+            <!-- Error Banner -->
+            {% if form.errors %}
+            <div class="alert-item alert-danger" style="padding: 15px; margin-bottom: 10px; flex-direction: column; align-items: flex-start; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons-round alert-item-icon">error</span>
+                    <span class="alert-message"><strong>Please correct the highlighted validation errors:</strong></span>
+                </div>
+                <ul style="font-size: 0.85rem; margin-top: 5px; color: var(--text-main); padding-left: 20px;">
+                    {% for field, errors in form.errors.items %}
+                        <li><strong>{{ field|title }}:</strong> {{ errors.0 }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- ========================================== -->
+            <!-- SECTION 1 — BASIC INFORMATION -->
+            <!-- ========================================== -->
+            <div id="basicInfoTab" class="form-section-pane active">
+                <div style="display: grid; grid-template-columns: 200px 1fr; gap: 30px; flex-wrap: wrap;">
+                    <!-- Logo Upload Panel -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                        <label class="form-label" style="text-align: center; width: 100%;">Warehouse Image</label>
+                        <div style="position: relative; width: 140px; height: 140px; border-radius: 12px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; background-color: var(--bg-main); overflow: hidden;" id="logoPreviewContainer">
+                            {% if object.logo %}
+                                <img src="{{ object.logo.url }}" id="formLogoPreview" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <span class="material-icons-round" style="font-size: 48px; color: var(--text-muted);" id="formLogoPlaceholder">add_photo_alternate</span>
+                                <img src="" id="formLogoPreview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            {% endif %}
+                        </div>
+                        <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
+                            <button type="button" class="btn-demo" style="padding: 6px 12px; font-size: 0.78rem;" onclick="document.getElementById('id_logo').click()">
+                                Choose Image
+                            </button>
+                            <button type="button" class="btn-demo" style="padding: 6px 12px; font-size: 0.78rem; color: var(--danger-color);" onclick="clearLogoUpload()">
+                                Remove
+                            </button>
+                        </div>
+                        <!-- Hidden Django File Field -->
+                        <div style="display: none;">
+                            {{ form.logo }}
+                        </div>
+                    </div>
+
+                    <!-- Fields Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1;">
+                        <!-- Warehouse Name -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" for="{{ form.name.id_for_label }}">Warehouse Name <span style="color: var(--danger-color);">*</span></label>
+                            <div class="input-wrapper">
+                                {{ form.name }}
+                            </div>
+                        </div>
+
+                        <!-- Warehouse Type -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.warehouse_type.id_for_label }}">Warehouse Type</label>
+                            <div class="input-wrapper">
+                                {{ form.warehouse_type }}
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+                            <div class="input-wrapper">
+                                {{ form.status }}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                            <div class="input-wrapper">
+                                {{ form.description }}
+                            </div>
+                        </div>
+
+                        <!-- Warehouse Code -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" for="{{ form.code.id_for_label }}">Warehouse Code (unique)</label>
+                            <div class="input-wrapper">
+                                {{ form.code }}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                                {{ form.auto_generate_code }}
+                                <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0;" for="{{ form.auto_generate_code.id_for_label }}">
+                                    Auto-generate Warehouse Code (WH-00001)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 2 — CONTACT INFORMATION -->
+            <!-- ========================================== -->
+            <div id="contactTab" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Manager Name -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.manager_name.id_for_label }}">Manager Name</label>
+                        <div class="input-wrapper">
+                            {{ form.manager_name }}
+                        </div>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.phone.id_for_label }}">Phone Number</label>
+                        <div class="input-wrapper">
+                            {{ form.phone }}
+                        </div>
+                    </div>
+
+                    <!-- Alternate Phone -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.alternate_phone.id_for_label }}">Alternate Phone</label>
+                        <div class="input-wrapper">
+                            {{ form.alternate_phone }}
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.email.id_for_label }}">Email Address</label>
+                        <div class="input-wrapper">
+                            {{ form.email }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 3 — ADDRESS -->
+            <!-- ========================================== -->
+            <div id="addressTab" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Address -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label" for="{{ form.address.id_for_label }}">Full Address</label>
+                        <div class="input-wrapper">
+                            {{ form.address }}
+                        </div>
+                    </div>
+
+                    <!-- City -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.city.id_for_label }}">City</label>
+                        <div class="input-wrapper">
+                            {{ form.city }}
+                        </div>
+                    </div>
+
+                    <!-- State -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.state.id_for_label }}">State</label>
+                        <div class="input-wrapper">
+                            {{ form.state }}
+                        </div>
+                    </div>
+
+                    <!-- Country -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.country.id_for_label }}">Country</label>
+                        <div class="input-wrapper">
+                            {{ form.country }}
+                        </div>
+                    </div>
+
+                    <!-- PIN Code -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.pin_code.id_for_label }}">PIN / ZIP Code</label>
+                        <div class="input-wrapper">
+                            {{ form.pin_code }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 4 — CAPACITY -->
+            <!-- ========================================== -->
+            <div id="capacityTab" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Total Capacity -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.total_capacity.id_for_label }}">Total Capacity <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">
+                            {{ form.total_capacity }}
+                        </div>
+                    </div>
+
+                    <!-- Capacity Unit -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.capacity_unit.id_for_label }}">Capacity Unit (e.g. Sq Ft, Boxes, Cartons, Units)</label>
+                        <div class="input-wrapper">
+                            {{ form.capacity_unit }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 5 — ADDITIONAL INFORMATION -->
+            <!-- ========================================== -->
+            <div id="additionalTab" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Opening Date -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.opening_date.id_for_label }}">Opening Date</label>
+                        <div class="input-wrapper">
+                            {{ form.opening_date }}
+                        </div>
+                    </div>
+
+                    <!-- Operating Hours -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.operating_hours.id_for_label }}">Operating Hours (e.g. 09:00 - 18:00)</label>
+                        <div class="input-wrapper">
+                            {{ form.operating_hours }}
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label" for="{{ form.notes.id_for_label }}">Notes</label>
+                        <div class="input-wrapper">
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <a href="{% url 'warehouse-list' %}" class="btn-demo" style="text-decoration: none; padding: 12px 24px;">
+                    Cancel
+                </a>
+                <button type="submit" class="page-actions-btn" style="padding: 12px 24px;">
+                    <span class="material-icons-round" style="font-size: 18px;">save</span>
+                    <span>Save Warehouse</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchFormTab(tabId, element) {
+        // Toggle tab headers active state
+        const tabBtns = document.querySelectorAll('.form-tab-btn');
+        tabBtns.forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        
+        // Hide all section panes
+        const panes = document.querySelectorAll('.form-section-pane');
+        panes.forEach(pane => {
+            pane.style.display = 'none';
+            pane.classList.remove('active');
+        });
+        
+        // Show current active pane
+        const activePane = document.getElementById(tabId);
+        activePane.style.display = 'block';
+        activePane.classList.add('active');
+    }
+
+    // Dynamic Image Preview Trigger
+    const fileInput = document.getElementById('id_logo');
+    const logoPreview = document.getElementById('formLogoPreview');
+    const logoPlaceholder = document.getElementById('formLogoPlaceholder');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoPreview.src = e.target.result;
+                    logoPreview.style.display = 'block';
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    function clearLogoUpload() {
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        if (logoPreview) {
+            logoPreview.src = '';
+            logoPreview.style.display = 'none';
+        }
+        if (logoPlaceholder) {
+            logoPlaceholder.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Multi-Warehouse Dashboard | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header & Global Warehouse Selector -->
+    <div class="page-header" style="margin-bottom: 0; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 class="page-title">Multi-Warehouse & Godown Dashboard</h1>
+            <div class="page-subtitle">Centralized inventory monitoring across main godowns, regional branches, and distribution hubs</div>
+        </div>
+        <div>
+            <form method="GET" style="display: flex; align-items: center; gap: 10px;">
+                <label style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted);">ACTIVE WAREHOUSE:</label>
+                <select name="warehouse" onchange="this.form.submit()" class="input-control" style="font-weight: 800; font-size: 0.95rem; color: var(--primary-color); border-color: var(--primary-color); background: var(--bg-card); padding: 8px 14px; min-width: 220px;">
+                    <option value="">All Warehouses (Consolidated)</option>
+                    {% for w in warehouses %}
+                    <option value="{{ w.id }}" {% if selected_warehouse and selected_warehouse.id == w.id %}selected{% endif %}>{{ w.name }} ({{ w.code }})</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #2563eb;">WAREHOUSES MONITORED</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #2563eb; margin-top: 4px;">{{ metrics.total_warehouses }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Active godowns & hubs</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #16a34a;">TOTAL STOCK QUANTITY</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #16a34a; margin-top: 4px;">{{ metrics.total_quantity }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Physical units on hand</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #8b5cf6;">TOTAL INVENTORY ASSETS</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #8b5cf6; margin-top: 4px;">₹{{ metrics.inventory_value|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">At purchase valuation</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #d97706;">PENDING TRANSFERS</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #d97706; margin-top: 4px;">{{ metrics.pending_transfers }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">In transit between hubs</div>
+        </div>
+    </div>
+
+    <!-- Capacity Usage Monitor Card -->
+    <div class="side-card" style="padding: 22px;">
+        <h3 style="margin-top: 0; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Warehouse Capacity Utilization</span>
+            <span style="font-size: 0.9rem; font-weight: 800; color: {% if metrics.capacity_usage_pct > 85 %}#dc2626{% else %}#16a34a{% endif %};">
+                {{ metrics.capacity_usage_pct }}% Capacity Used ({{ metrics.total_quantity }} / {{ metrics.total_capacity }} Units)
+            </span>
+        </h3>
+        <div style="width: 100%; height: 14px; background: var(--bg-hover); border-radius: 7px; overflow: hidden;">
+            <div style="width: {{ metrics.capacity_usage_pct }}%; height: 100%; background: {% if metrics.capacity_usage_pct > 85 %}#dc2626{% elif metrics.capacity_usage_pct > 70 %}#d97706{% else %}#16a34a{% endif %}; transition: width 0.3s ease;"></div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation Bar -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+        <a href="{% url 'warehouse-list' %}" class="side-card" style="padding: 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+            <span class="material-icons-round" style="color: var(--primary-color); font-size: 2rem;">store</span>
+            <div>
+                <strong style="display: block; font-size: 0.95rem;">Warehouse Master Directory</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">View all godowns & managers</span>
+            </div>
+        </a>
+
+        <a href="{% url 'warehouse-zones' %}" class="side-card" style="padding: 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+            <span class="material-icons-round" style="color: #16a34a; font-size: 2rem;">grid_view</span>
+            <div>
+                <strong style="display: block; font-size: 0.95rem;">Zones & Bin Locations</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Manage racks, shelves, and bins</span>
+            </div>
+        </a>
+
+        <a href="{% url 'warehouse-comparison' %}" class="side-card" style="padding: 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+            <span class="material-icons-round" style="color: #8b5cf6; font-size: 2rem;">table_chart</span>
+            <div>
+                <strong style="display: block; font-size: 0.95rem;">Multi-Warehouse Comparison</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Sales, stock, & profit breakdown</span>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

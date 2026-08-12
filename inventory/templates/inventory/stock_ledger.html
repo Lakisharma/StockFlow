@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Centralized Inventory Transaction Ledger | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title" style="display: flex; align-items: center; gap: 10px;">
+                <span class="material-icons-round" style="color: var(--primary-color); font-size: 2.2rem;">history_edu</span>
+                <span>Inventory Transaction Ledger</span>
+            </h1>
+            <div class="page-subtitle">Immutable, centralized inventory audit trail for all stock-changing transactions</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'stock-balances' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">inventory_2</span>
+                <span>Stock Balances</span>
+            </a>
+            <a href="{% url 'workflow-status' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">account_tree</span>
+                <span>Workflow Pipeline</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Ledger Table -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Product</th>
+                    <th>Warehouse</th>
+                    <th>Type</th>
+                    <th>Change Qty</th>
+                    <th>Previous Stock</th>
+                    <th>New Stock</th>
+                    <th>Batch / Serial</th>
+                    <th>Reference</th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movements %}
+                <tr>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">{{ m.created_at|date:"d M Y H:i" }}</td>
+                    <td style="font-weight: 800; color: var(--text-main);">{{ m.product.name }}</td>
+                    <td>{{ m.warehouse.name }}</td>
+                    <td>
+                        <span class="badge" style="padding: 4px 8px; font-weight: 800; {% if m.quantity > 0 %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                            {{ m.get_transaction_type_display }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 800; font-family: monospace; font-size: 1rem; color: {% if m.quantity > 0 %}#16a34a{% else %}#dc2626{% endif %};">
+                        {% if m.quantity > 0 %}+{{ m.quantity }}{% else %}{{ m.quantity }}{% endif %}
+                    </td>
+                    <td style="font-family: monospace;">{{ m.previous_stock }}</td>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ m.new_stock }}</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                        {% if m.batch %}Batch: {{ m.batch.batch_number }}<br>{% endif %}
+                        {% if m.serial %}Serial: {{ m.serial.serial_number }}{% endif %}
+                        {% if not m.batch and not m.serial %}-{% endif %}
+                    </td>
+                    <td style="font-family: monospace; font-size: 0.85rem;">{{ m.reference_number|default:'-' }}</td>
+                    <td style="font-size: 0.85rem; font-weight: 700;">{{ m.user.username|default:'System' }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                        No inventory movements logged yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

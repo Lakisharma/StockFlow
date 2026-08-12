@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}End-to-End Workflow Pipeline Status | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'stock-ledger' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Inventory Transaction Ledger</a>
+            </div>
+            <h1 class="page-title">End-to-End Operational Workflow Pipeline</h1>
+            <div class="page-subtitle">Unified integration status across Purchases, GRNs, Stock Reservation, Mobile Scanning, Dispatch, Invoicing, Payments, Accounting & Auditing</div>
+        </div>
+    </div>
+
+    <div class="side-card" style="padding: 24px;">
+        <h3 style="margin-top: 0; margin-bottom: 16px;">System Operational Integration Architecture</h3>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div style="padding: 16px; background: var(--bg-hover); border-radius: 8px; border-left: 4px solid #2563eb;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #2563eb;">1. Purchase to Inventory</h4>
+                <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                    Supplier &rarr; PO &rarr; Receiving &rarr; GRN &rarr; Stock Added &rarr; Batch/Serial Assigned &rarr; Purchase Invoice &rarr; Supplier Payable &rarr; Accounting.
+                </div>
+            </div>
+
+            <div style="padding: 16px; background: var(--bg-hover); border-radius: 8px; border-left: 4px solid #16a34a;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #16a34a;">2. Sales to Dispatch</h4>
+                <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                    Customer &rarr; SO &rarr; Stock Reserved &rarr; Barcode Pick/Scan &rarr; Dispatch &rarr; Stock Out &rarr; Sales Invoice &rarr; Customer Payment &rarr; Accounting.
+                </div>
+            </div>
+
+            <div style="padding: 16px; background: var(--bg-hover); border-radius: 8px; border-left: 4px solid #d97706;">
+                <h4 style="margin-top: 0; margin-bottom: 8px; color: #d97706;">3. Stock Transfers & Discrepancies</h4>
+                <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                    Source WH &rarr; Pick & Dispatch &rarr; In-Transit Stock &rarr; Destination WH &rarr; Receive & Scan &rarr; Discrepancy Recording &rarr; Ledger Updated.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configure Purchase | StockFlow AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section-header {
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+    .product-grid-table th {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: var(--text-muted);
+        padding: 10px;
+        background-color: var(--bg-sidebar);
+        border: 1px solid var(--border-color);
+    }
+    .product-grid-table td {
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+    .grid-input {
+        width: 100%;
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+    }
+    .grid-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+    }
+    .calc-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+    .calc-row.total {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        border-top: 1px dashed var(--border-color);
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="purchase-form-content" style="max-width: 1200px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <h1 class="page-title">{{ title }}</h1>
+            <div class="page-subtitle">Configure invoice totals, item tax rates, payment schedules, and documents</div>
+        </div>
+        <a href="{% url 'purchase-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round">arrow_back</span>
+            <span>Back to List</span>
+        </a>
+    </div>
+
+    <!-- Main Entry Form -->
+    <form method="POST" enctype="multipart/form-data" id="purchaseEntryForm" style="display: grid; grid-template-columns: 1fr 340px; gap: 25px; align-items: start;">
+        {% csrf_token %}
+
+        <!-- Left Column: Invoice Details & Items -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Section 1: Purchase Information -->
+            <div class="side-card" style="padding: 25px;">
+                <h3 class="form-section-header">
+                    <span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">receipt</span>
+                    <span>1. Purchase Information</span>
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                    <!-- Invoice Number -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.invoice_number.id_for_label }}">Invoice Number <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">{{ form.invoice_number }}</div>
+                    </div>
+                    
+                    <!-- PO Number -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.purchase_order_number.id_for_label }}">PO Number</label>
+                        <div class="input-wrapper">{{ form.purchase_order_number }}</div>
+                    </div>
+
+                    <!-- Supplier -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.supplier.id_for_label }}">Supplier <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">{{ form.supplier }}</div>
+                    </div>
+
+                    <!-- Warehouse -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.warehouse.id_for_label }}">Warehouse <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">{{ form.warehouse }}</div>
+                    </div>
+
+                    <!-- Purchase Date -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.purchase_date.id_for_label }}">Purchase Date <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">{{ form.purchase_date }}</div>
+                    </div>
+
+                    <!-- Expected Date -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.expected_delivery_date.id_for_label }}">Expected Delivery</label>
+                        <div class="input-wrapper">{{ form.expected_delivery_date }}</div>
+                    </div>
+
+                    <!-- Purchase Status -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.status.id_for_label }}">Purchase Status</label>
+                        <div class="input-wrapper">{{ form.status }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Product Items Grid -->
+            <div class="side-card" style="padding: 25px;">
+                <h3 class="form-section-header" style="margin-bottom: 15px;">
+                    <span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">inventory_2</span>
+                    <span>2. Product Items</span>
+                </h3>
+
+                <!-- Product Selection Search Dropdown -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+                    <div style="flex: 1;">
+                        <select id="productSearchSelector" class="input-control">
+                            <option value="">-- Select Product to Add --</option>
+                            {% for prod in products %}
+                                <option value="{{ prod.id }}" data-sku="{{ prod.sku }}" data-barcode="{{ prod.barcode }}" data-unit="{{ prod.unit.short_name }}" data-rate="{{ prod.purchase_price }}" data-gst="{{ prod.gst_rate }}">
+                                    {{ prod.name }} (SKU: {{ prod.sku }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="button" class="page-actions-btn" style="padding: 10px 20px;" onclick="addProductRow()">
+                        <span class="material-icons-round">add</span>
+                        <span>Add Item</span>
+                    </button>
+                </div>
+
+                <!-- Product Items Table -->
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="product-grid-table" style="width: 100%; border-collapse: collapse;" id="productItemsTable">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 180px;">Product</th>
+                                <th style="width: 80px;">Qty</th>
+                                <th style="width: 80px;">Free Qty</th>
+                                <th style="width: 100px;">Rate</th>
+                                <th style="width: 80px;">Disc %</th>
+                                <th style="width: 80px;">GST %</th>
+                                <th style="width: 100px;">GST Amt</th>
+                                <th style="width: 110px;">Total</th>
+                                <th style="width: 45px; text-align: center;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody">
+                            <!-- Populated dynamically via JS -->
+                            {% if object.pk %}
+                                {% for item in items %}
+                                    <tr data-prod-id="{{ item.product.id }}">
+                                        <td>
+                                            <strong style="font-size: 0.85rem; color: var(--text-main); display: block;">{{ item.product.name }}</strong>
+                                            <span style="font-size: 0.72rem; color: var(--text-muted);">SKU: <code>{{ item.product.sku }}</code> | Unit: {{ item.product.unit.short_name }}</span>
+                                            <input type="hidden" name="product_id[]" value="{{ item.product.id }}">
+                                        </td>
+                                        <td><input type="number" class="grid-input row-qty" name="quantity[]" value="{{ item.quantity }}" min="1" oninput="calculateGridRow(this)"></td>
+                                        <td><input type="number" class="grid-input row-free-qty" name="free_quantity[]" value="{{ item.free_quantity }}" min="0" oninput="calculateGridRow(this)"></td>
+                                        <td><input type="number" class="grid-input row-rate" name="rate[]" value="{{ item.rate }}" step="0.01" oninput="calculateGridRow(this)"></td>
+                                        <td><input type="number" class="grid-input row-disc" name="discount_percent[]" value="{{ item.discount_percent }}" min="0" max="100" oninput="calculateGridRow(this)"></td>
+                                        <td><input type="number" class="grid-input row-gst" name="gst_percent[]" value="{{ item.gst_percent }}" min="0" max="100" oninput="calculateGridRow(this)"></td>
+                                        <td class="row-gst-amount-text" style="font-size: 0.85rem; font-weight: 600; text-align: right;">${{ item.gst_amount|floatformat:2 }}</td>
+                                        <td class="row-total-amount-text" style="font-size: 0.85rem; font-weight: 700; text-align: right;">${{ item.total_amount|floatformat:2 }}</td>
+                                        <td style="text-align: center;"><button type="button" class="nav-action-btn" style="color: var(--danger-color); padding: 4px;" onclick="removeProductRow(this)"><span class="material-icons-round" style="font-size: 16px;">delete</span></button></td>
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="emptyTableState" style="text-align: center; color: var(--text-muted); padding: 30px; {% if object.pk %}display: none;{% endif %}">
+                    <span class="material-icons-round" style="font-size: 32px; display: block; margin-bottom: 8px;">playlist_add</span>
+                    No products added yet. Use the selector above to build your invoice items.
+                </div>
+            </div>
+
+            <!-- Section 5: Documents Upload -->
+            <div class="side-card" style="padding: 25px;">
+                <h3 class="form-section-header">
+                    <span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">attachment</span>
+                    <span>5. Invoice / Supporting Documents</span>
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.invoice_file.id_for_label }}">Upload Bill / Invoice PDF</label>
+                        <div class="input-wrapper">{{ form.invoice_file }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.supporting_document.id_for_label }}">Upload Supporting Receipt</label>
+                        <div class="input-wrapper">{{ form.supporting_document }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 6: Remarks -->
+            <div class="side-card" style="padding: 25px;">
+                <h3 class="form-section-header">
+                    <span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">edit_note</span>
+                    <span>6. Notes</span>
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.supplier_notes.id_for_label }}">Supplier Terms / Notes</label>
+                        <div class="input-wrapper">{{ form.supplier_notes }}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.internal_notes.id_for_label }}">Internal Remarks</label>
+                        <div class="input-wrapper">{{ form.internal_notes }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Live Summaries & Initial Payment -->
+        <div style="display: flex; flex-direction: column; gap: 25px; position: sticky; top: 25px;">
+            <!-- Section 3: Summary Calculations -->
+            <div class="side-card" style="padding: 25px;">
+                <h3 class="form-section-header" style="margin-bottom: 15px;">
+                    <span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">calculate</span>
+                    <span>3. Price Summary</span>
+                </h3>
+
+                <div style="display: flex; flex-direction: column;">
+                    <div class="calc-row">
+                        <span>Subtotal:</span>
+                        <span id="summarySubtotal">$0.00</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Item Discount:</span>
+                        <span id="summaryDiscount">$0.00</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Taxable Amount:</span>
+                        <span id="summaryTaxable">$0.00</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>CGST:</span>
+                        <span id="summaryCGST">$0.00</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>SGST:</span>
+                        <span id="summarySGST">$0.00</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>IGST:</span>
+                        <span id="summaryIGST">$0.00</span>
+                    </div>
+                    <div class="calc-row" style="font-weight: 600; color: var(--text-main);">
+                        <span>Total Tax (GST):</span>
+                        <span id="summaryTax">$0.00</span>
+                    </div>
+                    <div class="calc-row">
+                        <span>Round Off:</span>
+                        <span id="summaryRoundOff">$0.00</span>
+                    </div>
+                    
+                    <div class="calc-row total">
+                        <span>Grand Total:</span>
+                        <span id="summaryGrandTotal">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Hidden form inputs for totals -->
+                <div style="display: none;">
+                    {{ form.subtotal }}
+                    {{ form.discount_amount }}
+                    {{ form.tax_amount }}
+                    {{ form.round_off }}
+                    {{ form.grand_total }}
+                </div>
+            </div>
+
+            <!-- Section 4: Initial Payment Configuration -->
+            {% if not object.pk %}
+            <div class="side-card" style="padding: 25px;">
+                <h3 class="form-section-header" style="margin-bottom: 15px;">
+                    <span class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">payments</span>
+                    <span>4. Record Payment</span>
+                </h3>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Payment Method -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.payment_method.id_for_label }}">Payment Method</label>
+                        <div class="input-wrapper">{{ form.payment_method }}</div>
+                    </div>
+
+                    <!-- Payment Amount -->
+                    <div class="form-group">
+                        <label class="form-label">Payment Amount</label>
+                        <div class="input-wrapper">
+                            <input type="number" name="pay_amount" id="payAmountInput" class="input-control" step="0.01" placeholder="0.00" value="0.00" oninput="calculateBalance()">
+                        </div>
+                    </div>
+
+                    <!-- Reference Number -->
+                    <div class="form-group">
+                        <label class="form-label">Ref / Txn ID</label>
+                        <div class="input-wrapper">
+                            <input type="text" name="pay_reference" class="input-control" placeholder="Transaction receipt link">
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px dashed var(--border-color); padding-top: 12px; font-size: 0.88rem;">
+                        <div class="calc-row" style="margin-bottom: 4px;">
+                            <span>Paid Amount:</span>
+                            <span id="displayPaidAmount">$0.00</span>
+                        </div>
+                        <div class="calc-row" style="font-weight: 600; color: var(--danger-color); margin-bottom: 0;">
+                            <span>Pending Balance:</span>
+                            <span id="displayPendingAmount">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Save Actions -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <button type="submit" class="page-actions-btn" style="width: 100%; padding: 12px;">
+                    <span class="material-icons-round">save</span>
+                    <span>Save Bill</span>
+                </button>
+                <a href="{% url 'purchase-list' %}" class="btn-demo" style="text-decoration: none; text-align: center; width: 100%; padding: 10px;">
+                    Cancel
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function addProductRow() {
+        const selector = document.getElementById('productSearchSelector');
+        const selectedOpt = selector.options[selector.selectedIndex];
+        
+        if (!selectedOpt.value) {
+            alert('Please select a product first.');
+            return;
+        }
+
+        const prodId = selectedOpt.value;
+        const prodName = selectedOpt.text.split(' (SKU:')[0];
+        const sku = selectedOpt.getAttribute('data-sku');
+        const unit = selectedOpt.getAttribute('data-unit');
+        const rate = selectedOpt.getAttribute('data-rate');
+        const gst = selectedOpt.getAttribute('data-gst');
+
+        // Check if row already exists
+        const existingRow = document.querySelector(`tr[data-prod-id="${prodId}"]`);
+        if (existingRow) {
+            const qtyInput = existingRow.querySelector('.row-qty');
+            qtyInput.value = parseInt(qtyInput.value) + 1;
+            calculateGridRow(qtyInput);
+            return;
+        }
+
+        const tbody = document.getElementById('productTableBody');
+        const emptyState = document.getElementById('emptyTableState');
+        if (emptyState) emptyState.style.display = 'none';
+
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-prod-id', prodId);
+        tr.innerHTML = `
+            <td>
+                <strong style="font-size: 0.85rem; color: var(--text-main); display: block;">${prodName}</strong>
+                <span style="font-size: 0.72rem; color: var(--text-muted);">SKU: <code>${sku}</code> | Unit: ${unit}</span>
+                <input type="hidden" name="product_id[]" value="${prodId}">
+            </td>
+            <td><input type="number" class="grid-input row-qty" name="quantity[]" value="1" min="1" oninput="calculateGridRow(this)"></td>
+            <td><input type="number" class="grid-input row-free-qty" name="free_quantity[]" value="0" min="0" oninput="calculateGridRow(this)"></td>
+            <td><input type="number" class="grid-input row-rate" name="rate[]" value="${rate}" step="0.01" oninput="calculateGridRow(this)"></td>
+            <td><input type="number" class="grid-input row-disc" name="discount_percent[]" value="0" min="0" max="100" oninput="calculateGridRow(this)"></td>
+            <td><input type="number" class="grid-input row-gst" name="gst_percent[]" value="${gst}" min="0" max="100" oninput="calculateGridRow(this)"></td>
+            <td class="row-gst-amount-text" style="font-size: 0.85rem; font-weight: 600; text-align: right;">$0.00</td>
+            <td class="row-total-amount-text" style="font-size: 0.85rem; font-weight: 700; text-align: right;">$0.00</td>
+            <td style="text-align: center;">
+                <button type="button" class="nav-action-btn" style="color: var(--danger-color); padding: 4px;" onclick="removeProductRow(this)">
+                    <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        
+        // Trigger row calculations
+        calculateGridRow(tr.querySelector('.row-qty'));
+        
+        // Reset selector
+        selector.value = "";
+    }
+
+    function removeProductRow(btn) {
+        const row = btn.closest('tr');
+        row.remove();
+        
+        const tbody = document.getElementById('productTableBody');
+        if (tbody.children.length === 0) {
+            const emptyState = document.getElementById('emptyTableState');
+            if (emptyState) emptyState.style.display = 'block';
+        }
+        recalculateAllSummary();
+    }
+
+    function calculateGridRow(input) {
+        const row = input.closest('tr');
+        const qty = parseInt(row.querySelector('.row-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.row-rate').value) || 0.0;
+        const discPct = parseFloat(row.querySelector('.row-disc').value) || 0.0;
+        const gstPct = parseFloat(row.querySelector('.row-gst').value) || 0.0;
+
+        const rawTotal = qty * rate;
+        const discAmt = rawTotal * (discPct / 100.0);
+        const taxable = rawTotal - discAmt;
+        const gstAmt = taxable * (gstPct / 100.0);
+        const rowGrandTotal = taxable + gstAmt;
+
+        row.querySelector('.row-gst-amount-text').textContent = `$${gstAmt.toFixed(2)}`;
+        row.querySelector('.row-total-amount-text').textContent = `$${rowGrandTotal.toFixed(2)}`;
+
+        recalculateAllSummary();
+    }
+
+    function recalculateAllSummary() {
+        const rows = document.querySelectorAll('#productTableBody tr');
+        let subtotal = 0;
+        let totalDiscount = 0;
+        let totalTax = 0;
+
+        rows.forEach(row => {
+            const qty = parseInt(row.querySelector('.row-qty').value) || 0;
+            const rate = parseFloat(row.querySelector('.row-rate').value) || 0.0;
+            const discPct = parseFloat(row.querySelector('.row-disc').value) || 0.0;
+            const gstPct = parseFloat(row.querySelector('.row-gst').value) || 0.0;
+
+            const rawAmt = qty * rate;
+            const discAmt = rawAmt * (discPct / 100.0);
+            const taxable = rawAmt - discAmt;
+            const gstAmt = taxable * (gstPct / 100.0);
+
+            subtotal += rawAmt;
+            totalDiscount += discAmt;
+            totalTax += gstAmt;
+        });
+
+        const grandTotal = subtotal - totalDiscount + totalTax;
+        const roundOff = Math.round(grandTotal) - grandTotal;
+        const finalGrandTotal = grandTotal + roundOff;
+
+        // Update summaries display
+        document.getElementById('summarySubtotal').textContent = `$${subtotal.toFixed(2)}`;
+        document.getElementById('summaryDiscount').textContent = `$${totalDiscount.toFixed(2)}`;
+        document.getElementById('summaryTaxable').textContent = `$${(subtotal - totalDiscount).toFixed(2)}`;
+        
+        // GST details (CGST / SGST split 50-50, or IGST)
+        document.getElementById('summaryCGST').textContent = `$${(totalTax / 2.0).toFixed(2)}`;
+        document.getElementById('summarySGST').textContent = `$${(totalTax / 2.0).toFixed(2)}`;
+        document.getElementById('summaryIGST').textContent = `$0.00`; // Configured per billing location state later
+        document.getElementById('summaryTax').textContent = `$${totalTax.toFixed(2)}`;
+        document.getElementById('summaryRoundOff').textContent = `$${roundOff.toFixed(2)}`;
+        document.getElementById('summaryGrandTotal').textContent = `$${finalGrandTotal.toFixed(2)}`;
+
+        // Set hidden form parameters
+        document.getElementById('id_subtotal').value = subtotal.toFixed(2);
+        document.getElementById('id_discount_amount').value = totalDiscount.toFixed(2);
+        document.getElementById('id_tax_amount').value = totalTax.toFixed(2);
+        document.getElementById('id_round_off').value = roundOff.toFixed(2);
+        document.getElementById('id_grand_total').value = finalGrandTotal.toFixed(2);
+
+        calculateBalance();
+    }
+
+    function calculateBalance() {
+        const grandTotalStr = document.getElementById('id_grand_total').value;
+        const grandTotal = parseFloat(grandTotalStr) || 0.0;
+        
+        const payAmtInput = document.getElementById('payAmountInput');
+        if (payAmtInput) {
+            let payAmt = parseFloat(payAmtInput.value) || 0.0;
+            
+            // Validation: payment cannot exceed grand total
+            if (payAmt > grandTotal) {
+                payAmt = grandTotal;
+                payAmtInput.value = grandTotal.toFixed(2);
+            }
+
+            const pendingAmt = grandTotal - payAmt;
+            
+            document.getElementById('displayPaidAmount').textContent = `$${payAmt.toFixed(2)}`;
+            document.getElementById('displayPendingAmount').textContent = `$${pendingAmt.toFixed(2)}`;
+        }
+    }
+
+    // Trigger calculation if updating
+    document.addEventListener('DOMContentLoaded', function() {
+        recalculateAllSummary();
+    });
+</script>
+{% endblock %}

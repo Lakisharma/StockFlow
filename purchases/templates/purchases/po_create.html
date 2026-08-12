@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Purchase Order | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'po-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Purchase Orders</a>
+            </div>
+            <h1 class="page-title">Create Purchase Order</h1>
+            <div class="page-subtitle">Formulate supplier purchase agreements with tax calculation and itemized specifications</div>
+        </div>
+    </div>
+
+    <form method="POST" id="poForm">
+        {% csrf_token %}
+        <input type="hidden" name="action_type" id="actionTypeInput" value="draft">
+
+        <!-- Form Top Panel -->
+        <div class="side-card" style="padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 20px;">
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">PO Number</label>
+                <input type="text" name="po_number" class="input-control" value="{{ auto_po_number }}" required style="font-family: monospace; font-weight: 800;">
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Supplier</label>
+                <select name="supplier" class="input-control" required>
+                    <option value="">Select Supplier</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}">{{ s.name }} (GSTIN: {{ s.gstin|default:'N/A' }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Destination Warehouse</label>
+                <select name="warehouse" class="input-control" required>
+                    <option value="">Select Warehouse</option>
+                    {% for w in warehouses %}
+                    <option value="{{ w.id }}">{{ w.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">PO Date</label>
+                <input type="date" name="order_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Expected Delivery Date</label>
+                <input type="date" name="expected_delivery_date" class="input-control">
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Payment Terms</label>
+                <input type="text" name="payment_terms" class="input-control" value="Net 30">
+            </div>
+        </div>
+
+        <!-- Line Items Card -->
+        <div class="side-card" style="padding: 24px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Ordered Product Items</h3>
+                <button type="button" onclick="addProductRow()" class="page-actions-btn" style="padding: 6px 14px; font-size: 0.85rem;">+ Add Item Row</button>
+            </div>
+
+            <table class="data-table" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Product</th>
+                        <th style="width: 12%;">Ordered Qty</th>
+                        <th style="width: 15%;">Unit Rate (₹)</th>
+                        <th style="width: 12%;">GST (%)</th>
+                        <th style="width: 18%;">Line Total (₹)</th>
+                        <th style="width: 8%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTbody">
+                    <!-- Dynamic Rows -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Terms & Tax Summary Grid -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Special Notes</label>
+                    <textarea name="notes" class="input-control" rows="2" placeholder="Internal notes or shipping instructions..."></textarea>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Terms & Conditions</label>
+                    <textarea name="terms_conditions" class="input-control" rows="3" placeholder="Standard purchasing terms and vendor compliance conditions...">1. All goods must be delivered in undamaged condition.
+2. Invoice must reference PO number.
+3. Payment will be processed as per agreed payment terms.</textarea>
+                </div>
+            </div>
+
+            <!-- Tax Summary Panel -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Order Valuation</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Subtotal:</span>
+                        <strong id="displaySubtotal">₹0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Total Tax (GST):</span>
+                        <strong id="displayTax">₹0.00</strong>
+                    </div>
+                    <div style="height: 1px; background: var(--border-color); margin: 5px 0;"></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2rem; color: var(--primary-color);">
+                        <span>Grand Total:</span>
+                        <strong id="displayGrandTotal">₹0.00</strong>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" onclick="document.getElementById('actionTypeInput').value='draft'" class="btn-demo" style="flex: 1; padding: 12px;">Save Draft PO</button>
+                    <button type="submit" onclick="document.getElementById('actionTypeInput').value='submit'" class="page-actions-btn" style="flex: 1; padding: 12px;">Submit for Approval</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+const productsData = [
+    {% for p in products %}
+    { id: {{ p.id }}, name: "{{ p.name|escapejs }}", sku: "{{ p.sku|escapejs }}", price: {{ p.purchase_price|default:0.0 }}, gst: {{ p.gst_rate|default:18.0 }} },
+    {% endfor %}
+];
+
+function addProductRow() {
+    const tbody = document.getElementById('itemsTbody');
+    const rowId = Date.now();
+    
+    let optionsHtml = '<option value="">Select Product</option>';
+    productsData.forEach(p => {
+        optionsHtml += `<option value="${p.id}" data-price="${p.price}" data-gst="${p.gst}">${p.name} (SKU: ${p.sku})</option>`;
+    });
+
+    const tr = document.createElement('tr');
+    tr.id = `row-${rowId}`;
+    tr.innerHTML = `
+        <td>
+            <select name="product_id[]" class="input-control product-select" onchange="onProductSelect(this, '${rowId}')" required>
+                ${optionsHtml}
+            </select>
+        </td>
+        <td><input type="number" name="quantity[]" class="input-control qty-input" value="10" min="1" oninput="calculateTotals()" required></td>
+        <td><input type="number" name="rate[]" step="0.01" class="input-control rate-input" value="0.00" oninput="calculateTotals()" required></td>
+        <td><input type="number" name="gst[]" step="0.01" class="input-control gst-input" value="18.00" oninput="calculateTotals()"></td>
+        <td style="font-weight: 800; font-family: monospace;" class="line-total-cell">₹0.00</td>
+        <td><button type="button" onclick="removeRow('${rowId}')" class="btn-demo" style="color: #dc2626; padding: 4px 8px;">&times;</button></td>
+    `;
+    tbody.appendChild(tr);
+    calculateTotals();
+}
+
+function onProductSelect(selectElem, rowId) {
+    const selected = selectElem.options[selectElem.selectedIndex];
+    const price = selected.getAttribute('data-price') || '0.00';
+    const gst = selected.getAttribute('data-gst') || '18.00';
+    
+    const tr = document.getElementById(`row-${rowId}`);
+    tr.querySelector('.rate-input').value = parseFloat(price).toFixed(2);
+    tr.querySelector('.gst-input').value = parseFloat(gst).toFixed(2);
+    calculateTotals();
+}
+
+function removeRow(rowId) {
+    const tr = document.getElementById(`row-${rowId}`);
+    if (tr) tr.remove();
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let subtotal = 0;
+    let totalTax = 0;
+
+    const rows = document.querySelectorAll('#itemsTbody tr');
+    rows.forEach(tr => {
+        const qty = parseFloat(tr.querySelector('.qty-input')?.value || 0);
+        const rate = parseFloat(tr.querySelector('.rate-input')?.value || 0);
+        const gst = parseFloat(tr.querySelector('.gst-input')?.value || 0);
+
+        const lineSubtotal = qty * rate;
+        const lineTax = lineSubtotal * (gst / 100.0);
+        const lineTotal = lineSubtotal + lineTax;
+
+        tr.querySelector('.line-total-cell').textContent = '₹' + lineTotal.toFixed(2);
+
+        subtotal += lineSubtotal;
+        totalTax += lineTax;
+    });
+
+    document.getElementById('displaySubtotal').textContent = '₹' + subtotal.toFixed(2);
+    document.getElementById('displayTax').textContent = '₹' + totalTax.toFixed(2);
+    document.getElementById('displayGrandTotal').textContent = '₹' + (subtotal + totalTax).toFixed(2);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    addProductRow();
+});
+</script>
+{% endblock %}

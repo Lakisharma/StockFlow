@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Barcode & QR Code - {{ product.name }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'barcode-scanner' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Scanner</a>
+            </div>
+            <h1 class="page-title">{{ product.name }} Barcode & QR Code</h1>
+            <div class="page-subtitle">Manage barcode generation, manual manufacturer barcodes, vector SVG previews, and printable labels</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'barcode-labels' %}?product_id={{ product.id }}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">print</span>
+                <span>Print Product Labels</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Cards Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Left: Barcode Card & Manual Assignment Form -->
+        <div class="side-card" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Product Barcode (CODE128)</h3>
+
+            <div style="background: #fff; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                {{ barcode_svg|safe }}
+            </div>
+
+            <form method="POST" style="display: flex; flex-direction: column; gap: 12px;">
+                {% csrf_token %}
+                <label style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">Manual Manufacturer Barcode Entry</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" name="manual_barcode" class="input-control" placeholder="Enter barcode number (e.g. 8901234567890)" value="{{ product.barcode|default:'' }}" style="font-family: monospace;">
+                    <button type="submit" class="page-actions-btn" style="padding: 8px 16px;">Save</button>
+                </div>
+            </form>
+
+            <form method="POST" style="display: flex; justify-content: flex-end;">
+                {% csrf_token %}
+                <button type="submit" class="btn-demo" style="padding: 8px 16px; font-weight: 700;">Auto-Generate Unique Barcode</button>
+            </form>
+        </div>
+
+        <!-- Right: QR Code Card -->
+        <div class="side-card" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Product Safe QR Code</h3>
+
+            <div style="background: #fff; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color); display: flex; justify-content: center;">
+                {{ qr_svg|safe }}
+            </div>
+
+            <div style="font-size: 0.85rem; color: var(--text-muted); background-color: var(--bg-main); padding: 12px; border-radius: 6px;">
+                <strong>Safe Payload Content:</strong><br>
+                SKU: <code style="color: var(--text-main);">{{ product.sku }}</code><br>
+                Product Name: <code style="color: var(--text-main);">{{ product.name }}</code>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

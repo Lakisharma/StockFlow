@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock Transfers Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="transfer-list-content" style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Stock Transfers</h1>
+            <div class="page-subtitle">Manage inter-warehouse product movements, transit tracking, and receiving</div>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'transfer-create' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">swap_horiz</span>
+                <span>Create Transfer</span>
+            </a>
+            <a href="{% url 'transfer-export-csv' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">download</span>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div class="metric-card">
+            <div class="metric-label">Total Transfers</div>
+            <div class="metric-value">{{ summary.total_transfers }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--warning-color);">
+            <div class="metric-label">In Transit</div>
+            <div class="metric-value" style="color: var(--warning-color);">{{ summary.in_transit_count }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--success-color);">
+            <div class="metric-label">Completed Transfers</div>
+            <div class="metric-value" style="color: var(--success-color);">{{ summary.completed_count }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--primary-color);">
+            <div class="metric-label">Draft Requests</div>
+            <div class="metric-value" style="color: var(--primary-color);">{{ summary.draft_count }}</div>
+        </div>
+    </div>
+
+    <!-- Filters & Search Bar Card -->
+    <div class="side-card" style="padding: 20px;">
+        <form method="GET" action="{% url 'transfer-list' %}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Search</label>
+                <input type="text" name="q" class="input-control" placeholder="Transfer #, Product, SKU..." value="{{ search_query }}">
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">From Warehouse</label>
+                <select name="from_warehouse" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Source Locations</option>
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if selected_from_wh == wh.id|stringformat:"i" %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">To Warehouse</label>
+                <select name="to_warehouse" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Destinations</option>
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if selected_to_wh == wh.id|stringformat:"i" %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Status Filter</label>
+                <select name="status" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    {% for key, label in statuses %}
+                        <option value="{{ key }}" {% if selected_status == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; flex: 1;">Filter</button>
+                <a href="{% url 'transfer-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; justify-content: center;" title="Reset Filters">
+                    <span class="material-icons-round">refresh</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Transfers Table Card -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Transfer #</th>
+                        <th>Date</th>
+                        <th>From Warehouse</th>
+                        <th>To Warehouse</th>
+                        <th style="text-align: center;">Products</th>
+                        <th style="text-align: center;">Total Qty</th>
+                        <th style="text-align: center;">Priority</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transfers %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'transfer-detail' t.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">
+                                {{ t.transfer_number }}
+                            </a>
+                        </td>
+                        <td>{{ t.transfer_date|date:"M d, Y" }}</td>
+                        <td><strong>{{ t.from_warehouse.name }}</strong></td>
+                        <td><strong>{{ t.to_warehouse.name }}</strong></td>
+                        <td style="text-align: center;">{{ t.total_products }}</td>
+                        <td style="text-align: center; font-weight: 700;">{{ t.total_quantity }}</td>
+                        <td style="text-align: center;">
+                            {% if t.priority == 'urgent' %}
+                                <span class="badge badge-danger">Urgent</span>
+                            {% elif t.priority == 'high' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">High</span>
+                            {% else %}
+                                <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ t.get_priority_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if t.status == 'received' %}
+                                <span class="badge badge-success">Received</span>
+                            {% elif t.status == 'partially_received' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Partially Received</span>
+                            {% elif t.status == 'in_transit' %}
+                                <span class="badge badge-info" style="background-color: var(--warning-light); color: var(--warning-color);">In Transit</span>
+                            {% elif t.status == 'approved' %}
+                                <span class="badge badge-info">Approved</span>
+                            {% elif t.status == 'requested' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Requested</span>
+                            {% elif t.status == 'rejected' or t.status == 'cancelled' %}
+                                <span class="badge badge-danger">{{ t.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">Draft</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <a href="{% url 'transfer-detail' t.id %}" class="nav-action-btn" title="View Details">
+                                    <span class="material-icons-round" style="font-size: 18px;">visibility</span>
+                                </a>
+                                {% if t.status == 'draft' or t.status == 'requested' %}
+                                <a href="{% url 'transfer-edit' t.id %}" class="nav-action-btn" title="Edit Transfer">
+                                    <span class="material-icons-round" style="font-size: 18px;">edit</span>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'transfer-print' t.id %}" target="_blank" class="nav-action-btn" title="Print Manifest">
+                                    <span class="material-icons-round" style="font-size: 18px;">print</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 10px;">swap_horiz</span>
+                            No stock transfers found matching your filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Page <strong>{{ page_obj.number }}</strong> of <strong>{{ paginator.num_pages }}</strong>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&from_warehouse={{ selected_from_wh }}&to_warehouse={{ selected_to_wh }}&status={{ selected_status }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Previous</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&from_warehouse={{ selected_from_wh }}&to_warehouse={{ selected_to_wh }}&status={{ selected_status }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

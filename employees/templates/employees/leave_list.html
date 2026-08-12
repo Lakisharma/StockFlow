@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leave Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Leave Management & Approval</h1>
+            <div class="page-subtitle">Track leave applications, Casual/Sick/Earned leaves, and manager approvals</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'leave-create' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">add</span>
+                <span>+ Apply For Leave</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Leave Requests Table -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Leave Type</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Days</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in leaves %}
+                <tr>
+                    <td style="font-weight: 700; color: var(--text-main);">{{ l.employee.full_name }} ({{ l.employee.employee_code }})</td>
+                    <td><span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary-color); padding: 3px 8px;">{{ l.leave_type.name }}</span></td>
+                    <td>{{ l.start_date|date:"d M Y" }}</td>
+                    <td>{{ l.end_date|date:"d M Y" }}</td>
+                    <td style="font-weight: 800;">{{ l.number_of_days }}</td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">{{ l.reason }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if l.status == 'approved' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif l.status == 'pending' %}background-color: rgba(217, 119, 6, 0.15); color: #d97706;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                            {{ l.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if l.status == 'pending' %}
+                        <form method="POST" action="{% url 'leave-approve' l.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="page-actions-btn" style="padding: 4px 12px; font-size: 0.78rem; background: #16a34a; border-color: #16a34a;">Approve</button>
+                        </form>
+                        {% else %}
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No leave requests found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

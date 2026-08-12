@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Receivables Aging Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Receivables Aging Analysis Report</h1>
+            <div class="page-subtitle">Categorization of outstanding customer receivables by age buckets</div>
+        </div>
+    </div>
+
+    <!-- Aging Summary Table -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Aging Buckets Summary</h3>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Age Bucket</th>
+                    <th>Outstanding Amount (₹)</th>
+                    <th>Percentage of Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 700; color: #16a34a;">Current (Not Overdue)</td>
+                    <td style="font-weight: 800;">₹{{ aging_data.current|floatformat:2 }}</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700; color: #d97706;">1 – 30 Days Overdue</td>
+                    <td style="font-weight: 800;">₹{{ aging_data.1_30|floatformat:2 }}</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700; color: #ea580c;">31 – 60 Days Overdue</td>
+                    <td style="font-weight: 800;">₹{{ aging_data.31_60|floatformat:2 }}</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700; color: #dc2626;">61 – 90 Days Overdue</td>
+                    <td style="font-weight: 800;">₹{{ aging_data.61_90|floatformat:2 }}</td>
+                    <td>-</td>
+                </tr>
+                <tr style="background: rgba(220, 38, 38, 0.05);">
+                    <td style="font-weight: 800; color: #991b1b;">90+ Days Overdue (Critical)</td>
+                    <td style="font-weight: 800; color: #991b1b;">₹{{ aging_data.over_90|floatformat:2 }}</td>
+                    <td>-</td>
+                </tr>
+                <tr style="font-weight: 800; font-size: 1.1rem; background: var(--bg-hover);">
+                    <td>Total Outstanding Receivables</td>
+                    <td style="color: var(--primary-color);">₹{{ aging_data.total|floatformat:2 }}</td>
+                    <td>100.0%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

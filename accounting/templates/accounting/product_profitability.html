@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Product Profitability Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Product Profitability Analysis</h1>
+            <div class="page-subtitle">Revenue, cost of goods sold, gross profit, and margin breakdown by product</div>
+        </div>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>SKU</th>
+                    <th>Units Sold</th>
+                    <th>Sales Revenue (₹)</th>
+                    <th>Cost of Goods Sold (₹)</th>
+                    <th>Gross Profit (₹)</th>
+                    <th>Gross Margin (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in product_profitability %}
+                <tr>
+                    <td style="font-weight: 700; color: var(--text-main);">{{ p.product.name }}</td>
+                    <td style="font-family: monospace;">{{ p.product.sku }}</td>
+                    <td style="font-weight: 800;">{{ p.units_sold }}</td>
+                    <td style="font-weight: 700;">₹{{ p.revenue|floatformat:2 }}</td>
+                    <td style="color: #dc2626;">₹{{ p.cost|floatformat:2 }}</td>
+                    <td style="font-weight: 800; color: #16a34a;">₹{{ p.profit|floatformat:2 }}</td>
+                    <td>
+                        <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #16a34a; padding: 4px 10px; font-weight: 800;">
+                            {{ p.margin_pct|floatformat:1 }}%
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No fulfilled sales data available for product profitability analysis.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

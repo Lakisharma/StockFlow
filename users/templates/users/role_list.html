@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Role & Permission Matrix Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Roles & Permissions Management</h1>
+            <div class="page-subtitle">Configure enterprise roles and module-level permission matrices</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'user-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Users</a>
+            <a href="{% url 'role-add' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">add_moderator</span>
+                <span>Create Custom Role</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Roles Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        {% for r in roles %}
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ r.name }}</h3>
+                    {% if r.is_system_role %}
+                        <span class="badge badge-info" style="font-size: 0.7rem;">System Default</span>
+                    {% else %}
+                        <span class="badge badge-success" style="font-size: 0.7rem;">Custom Role</span>
+                    {% endif %}
+                </div>
+
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 15px; min-height: 36px;">
+                    {{ r.description|default:"No description provided." }}
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-main); margin-bottom: 15px;">
+                    <strong>{{ r.permissions.count }}</strong> Module Permission Configurations
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                <a href="{% url 'role-edit' r.id %}" class="page-actions-btn" style="text-decoration: none; padding: 6px 12px; font-size: 0.8rem; flex: 1; text-align: center;">
+                    Edit Permission Matrix
+                </a>
+                {% if not r.is_system_role %}
+                <form method="POST" action="{% url 'role-delete' r.id %}" onsubmit="return confirm('Delete custom role {{ r.name }}?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-demo" style="padding: 6px 12px; font-size: 0.8rem; color: var(--danger-color);">Delete</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

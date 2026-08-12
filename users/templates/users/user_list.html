@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header & Actions -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Users & Access Management</h1>
+            <div class="page-subtitle">Manage enterprise user accounts, assigned roles, and warehouse access levels</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'role-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">security</span>
+                <span>Roles & Permissions</span>
+            </a>
+            <a href="{% url 'user-add' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">person_add</span>
+                <span>Add New User</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="side-card" style="padding: 20px;">
+        <form method="GET" action="{% url 'user-list' %}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label">Search Users</label>
+                <input type="text" name="search" class="input-control" placeholder="Search name, email, phone..." value="{{ search }}">
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label">Status</label>
+                <select name="status" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="suspended" {% if selected_status == 'suspended' %}selected{% endif %}>Suspended</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label">Role</label>
+                <select name="role" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Roles</option>
+                    {% for r in roles %}
+                        <option value="{{ r.id }}" {% if selected_role == r.id|stringformat:"i" %}selected{% endif %}>{{ r.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; flex: 1;">Filter</button>
+                <a href="{% url 'user-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; justify-content: center;">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>User Profile</th>
+                        <th>Email & Phone</th>
+                        <th>Role</th>
+                        <th>Assigned Warehouse(s)</th>
+                        <th style="text-align: center;">Status</th>
+                        <th>Last Login</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 38px; height: 38px; border-radius: 50%; background-color: var(--primary-color); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem;">
+                                    {{ u.first_name|default:u.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'user-detail' u.id %}" style="text-decoration: none; font-weight: 700; color: var(--text-main);">
+                                        {{ u.get_full_name|default:u.username }}
+                                    </a>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">@{{ u.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-size: 0.85rem;">
+                            <div>{{ u.email|default:"-" }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ u.profile.phone|default:"-" }}</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main); font-weight: 600;">
+                                {{ u.profile.role.name|default:"No Role Assigned" }}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.82rem;">
+                            {% if u.profile.warehouse_access_type == 'all' %}
+                                <span class="badge badge-success" style="font-size: 0.72rem;">All Warehouses</span>
+                            {% elif u.profile.warehouse_access_type == 'selected' %}
+                                {% for wh in u.profile.assigned_warehouses.all %}
+                                    <span class="badge badge-info" style="font-size: 0.72rem; margin-right: 2px;">{{ wh.name }}</span>
+                                {% empty %}
+                                    <span style="color: var(--text-muted);">None</span>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: var(--text-muted);">No Warehouse Access</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if u.profile.status == 'active' and u.is_active %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-muted);">
+                            {{ u.last_login|date:"M d, Y H:i"|default:"Never" }}
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <a href="{% url 'user-detail' u.id %}" class="nav-action-btn" title="View Profile">
+                                    <span class="material-icons-round" style="font-size: 18px;">visibility</span>
+                                </a>
+                                <a href="{% url 'user-edit' u.id %}" class="nav-action-btn" title="Edit User">
+                                    <span class="material-icons-round" style="font-size: 18px;">edit</span>
+                                </a>
+                                <form method="POST" action="{% url 'user-deactivate' u.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to toggle status for {{ u.username }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="nav-action-btn" title="Toggle Active Status" style="border: none; background: none; cursor: pointer;">
+                                        <span class="material-icons-round" style="font-size: 18px; color: var(--warning-color);">power_settings_new</span>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{% url 'user-delete' u.id %}" style="display: inline;" onsubmit="return confirm('Soft-delete user {{ u.username }}? Historical activity records will be preserved.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="nav-action-btn" title="Archive / Delete User" style="border: none; background: none; cursor: pointer;">
+                                        <span class="material-icons-round" style="font-size: 18px; color: var(--danger-color);">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No users found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

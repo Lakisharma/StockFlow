@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Backup Details - {{ backup.backup_id }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'backup-dashboard' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Backup Dashboard</a>
+            </div>
+            <h1 class="page-title">Backup Details: {{ backup.backup_id }}</h1>
+            <div class="page-subtitle">{{ backup.backup_name }} &bull; Generated {{ backup.created_at|date:"d F Y, H:i:s" }}</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'backup-download' backup.id %}" class="page-actions-btn">
+                <span class="material-icons-round">download</span>
+                <span>Download Archive</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Backup Details Grid -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+        <!-- Left: Specifications -->
+        <div class="side-card" style="padding: 25px;">
+            <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                Archive Overview & Integrity
+            </h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <div style="font-size: 0.75rem; uppercase; color: var(--text-muted); font-weight: 700;">Backup ID</div>
+                    <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">{{ backup.backup_id }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; uppercase; color: var(--text-muted); font-weight: 700;">Backup Type</div>
+                    <div style="margin-top: 4px;">
+                        <span class="badge" style="padding: 4px 8px; font-size: 0.75rem; background-color: rgba(59, 130, 246, 0.15); color: #2563eb;">
+                            {{ backup.get_backup_type_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <div style="font-size: 0.75rem; uppercase; color: var(--text-muted); font-weight: 700;">Status</div>
+                    <div style="margin-top: 4px;">
+                        <span class="badge" style="padding: 4px 8px; font-size: 0.75rem; background-color: rgba(16, 185, 129, 0.15); color: #059669;">
+                            {{ backup.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; uppercase; color: var(--text-muted); font-weight: 700;">Verification Checksum</div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: #10b981; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-round" style="font-size: 18px;">verified</span>
+                        <span>{{ backup.get_verification_status_display }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">SHA-256 Hash Checksum</label>
+                <input type="text" class="input-control" readonly value="{{ backup.checksum_sha256 }}" style="font-family: monospace; font-size: 0.8rem; background-color: var(--bg-body);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Server Storage File Path</label>
+                <input type="text" class="input-control" readonly value="{{ backup.file_path }}" style="font-family: monospace; font-size: 0.8rem; background-color: var(--bg-body);">
+            </div>
+        </div>
+
+        <!-- Right: Size Metrics Card -->
+        <div class="side-card" style="padding: 25px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                Storage Breakdown
+            </h3>
+
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Database Size</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{ backup.database_size_bytes }} Bytes</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Media Uploads Size</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{ backup.media_size_bytes }} Bytes</span>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">Total Compressed Archive</span>
+                    <span style="font-size: 1.1rem; font-weight: 800; color: var(--primary-color);">{{ backup.file_size_mb }} MB</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

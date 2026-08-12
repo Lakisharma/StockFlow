@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Transactions | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Payment Transactions Registry</h1>
+            <div class="page-subtitle">Complete log of customer receipts, supplier payouts, and account adjustments</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'payment-create' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">add</span>
+                <span>+ Record Payment</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: flex; gap: 12px;">
+            <input type="text" name="search" class="input-control" placeholder="Search payment number, reference, customer or supplier..." value="{{ search|default:'' }}" style="font-family: monospace;">
+            <select name="type" class="input-control" style="width: 220px;">
+                <option value="">All Payment Types</option>
+                <option value="customer_payment" {% if type_filter == 'customer_payment' %}selected{% endif %}>Customer Payment</option>
+                <option value="supplier_payment" {% if type_filter == 'supplier_payment' %}selected{% endif %}>Supplier Payment</option>
+            </select>
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Search</button>
+            <a href="{% url 'payment-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Reset</a>
+        </form>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Payment Number</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Party</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ p.payment_number }}</td>
+                    <td>{{ p.payment_date|date:"d M Y" }}</td>
+                    <td style="font-size: 0.8rem; font-weight: 700;">{{ p.get_payment_type_display }}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">{% if p.customer %}{{ p.customer.name }}{% elif p.supplier %}{{ p.supplier.name }}{% else %}General{% endif %}</td>
+                    <td>{{ p.get_payment_method_display }}</td>
+                    <td style="font-family: monospace;">{{ p.reference_number|default:'N/A' }}</td>
+                    <td style="font-weight: 800; color: {% if p.payment_type == 'customer_payment' %}#16a34a{% else %}#dc2626{% endif %};">₹{{ p.amount|floatformat:2 }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if p.status == 'completed' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background-color: rgba(220, 38, 38, 0.15); color: #dc2626;{% endif %}">
+                            {{ p.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px;">
+                            <a href="{% url 'payment-detail' p.id %}" class="btn-demo" style="text-decoration: none; padding: 4px 8px; font-size: 0.78rem;">Inspect</a>
+                            <a href="{% url 'payment-print' p.id %}" target="_blank" class="btn-demo" style="text-decoration: none; padding: 4px 8px; font-size: 0.78rem;">Receipt</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No payment transactions found matching your criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

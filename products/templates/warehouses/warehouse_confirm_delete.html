@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete / Deactivate Warehouse | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="warehouse-delete-content" style="max-width: 600px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <h1 class="page-title">Delete Warehouse</h1>
+            <div class="page-subtitle">Configure warehouse removal or safe deactivation options</div>
+        </div>
+    </div>
+
+    <!-- Confirm Card -->
+    <div class="side-card" style="padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        <div class="icon-danger" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--danger-color); background-color: var(--danger-light);">
+            <span class="material-icons-round" style="font-size: 36px;">warning</span>
+        </div>
+
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Safe Deactivation or Hard Delete</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 450px;">
+            Are you sure you want to delete warehouse <strong>"{{ object.name }}"</strong> with code <strong>"{{ object.code }}"</strong>?
+            <br><br>
+            {% if has_stock %}
+                <span style="color: var(--danger-color); font-weight: 600;">
+                    WARNING: This warehouse contains active product stocks. Deleting it permanently is blocked to protect database inventory tracking integrity. You can only choose to **Deactivate** it.
+                </span>
+            {% else %}
+                This warehouse does not contain active stocks. You can delete it permanently, or deactivate it to block future stock assignments.
+            {% endif %}
+        </p>
+
+        <!-- Form Options -->
+        <form method="POST" style="width: 100%; display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 15px;">
+            {% csrf_token %}
+            
+            <div style="display: flex; gap: 15px; width: 100%; justify-content: center;">
+                <a href="{% url 'warehouse-list' %}" class="btn-demo" style="text-decoration: none; padding: 12px 24px;">
+                    Cancel
+                </a>
+                
+                <!-- Safe Deactivate Option -->
+                <button type="submit" name="deactivate_only" value="true" class="page-actions-btn" style="background-color: var(--warning-color); padding: 12px 24px;">
+                    <span class="material-icons-round" style="font-size: 18px; color: #ffffff;">block</span>
+                    <span style="color: #ffffff;">Deactivate (Safe)</span>
+                </button>
+
+                <!-- Hard Delete Option -->
+                {% if not has_stock %}
+                <button type="submit" name="deactivate_only" value="false" class="page-actions-btn" style="background-color: var(--danger-color); padding: 12px 24px;" onclick="return confirm('Are you sure you want to PERMANENTLY delete this warehouse? This action cannot be undone.');">
+                    <span class="material-icons-round" style="font-size: 18px;">delete_forever</span>
+                    <span>Delete Permanently</span>
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

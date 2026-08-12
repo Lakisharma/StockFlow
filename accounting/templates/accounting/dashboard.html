@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Accounting Dashboard | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Accounting & Financial Dashboard</h1>
+            <div class="page-subtitle">Executive overview of business revenue, gross/net profits, expenses, cash flow, and tax liabilities</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'expense-create' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">add</span>
+                <span>+ Record Expense</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #2563eb;">GROSS REVENUE</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: #2563eb; margin-top: 4px;">₹{{ fin.gross_revenue|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">Net Sales: ₹{{ fin.net_sales|floatformat:2 }}</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #16a34a;">GROSS PROFIT</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: #16a34a; margin-top: 4px;">₹{{ fin.gross_profit|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: #16a34a; font-weight: 700; margin-top: 6px;">Gross Margin: {{ fin.gross_margin_pct|floatformat:1 }}%</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #d97706;">OPERATING EXPENSES</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: #d97706; margin-top: 4px;">₹{{ fin.total_expenses|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;"><a href="{% url 'expense-list' %}" style="color: var(--primary-color); text-decoration: none;">View Expenses &rarr;</a></div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: {% if fin.net_profit >= 0 %}#16a34a{% else %}#dc2626{% endif %};">NET PROFIT</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: {% if fin.net_profit >= 0 %}#16a34a{% else %}#dc2626{% endif %}; margin-top: 4px;">₹{{ fin.net_profit|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">Net Margin: {{ fin.net_margin_pct|floatformat:1 }}%</div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation Links Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <a href="{% url 'profit-loss' %}" class="side-card" style="padding: 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+            <span class="material-icons-round" style="color: var(--primary-color); font-size: 2rem;">analytics</span>
+            <div>
+                <strong style="display: block; font-size: 0.95rem;">Profit & Loss</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">P&L Statement</span>
+            </div>
+        </a>
+
+        <a href="{% url 'cash-flow' %}" class="side-card" style="padding: 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+            <span class="material-icons-round" style="color: #16a34a; font-size: 2rem;">account_balance</span>
+            <div>
+                <strong style="display: block; font-size: 0.95rem;">Cash Flow</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Inflow vs Outflow</span>
+            </div>
+        </a>
+
+        <a href="{% url 'tax-summary' %}" class="side-card" style="padding: 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+            <span class="material-icons-round" style="color: #d97706; font-size: 2rem;">receipt_long</span>
+            <div>
+                <strong style="display: block; font-size: 0.95rem;">Tax Summary</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">GST Output / Input</span>
+            </div>
+        </a>
+
+        <a href="{% url 'inventory-valuation' %}" class="side-card" style="padding: 16px; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+            <span class="material-icons-round" style="color: #8b5cf6; font-size: 2rem;">inventory_2</span>
+            <div>
+                <strong style="display: block; font-size: 0.95rem;">Inventory Valuation</strong>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Asset Valuation</span>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

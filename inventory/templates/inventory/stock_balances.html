@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Multi-Warehouse Stock Balance Summary | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'stock-ledger' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Inventory Transaction Ledger</a>
+            </div>
+            <h1 class="page-title">Multi-Warehouse Stock Balance Summary</h1>
+            <div class="page-subtitle">Consolidated inventory breakdown distinguishing Physical, Reserved, Available, Damaged, and Expired stock</div>
+        </div>
+    </div>
+
+    <!-- Balances Table -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>SKU</th>
+                    <th>Physical Stock</th>
+                    <th>Reserved Stock</th>
+                    <th>Available Stock</th>
+                    <th>Damaged Stock</th>
+                    <th>Expired Stock</th>
+                    <th>In-Transit Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in balances_data %}
+                <tr>
+                    <td style="font-weight: 800; color: var(--text-main);">{{ row.product.name }}</td>
+                    <td style="font-family: monospace;">{{ row.product.sku }}</td>
+                    <td style="font-weight: 800; font-family: monospace; font-size: 1rem; color: #2563eb;">{{ row.balances.physical_stock }}</td>
+                    <td style="font-weight: 800; font-family: monospace; font-size: 1rem; color: #d97706;">{{ row.balances.reserved_stock }}</td>
+                    <td style="font-weight: 800; font-family: monospace; font-size: 1.05rem; color: #16a34a;">{{ row.balances.available_stock }}</td>
+                    <td style="font-weight: 800; font-family: monospace; color: #dc2626;">{{ row.balances.damaged_stock }}</td>
+                    <td style="font-weight: 800; font-family: monospace; color: #dc2626;">{{ row.balances.expired_stock }}</td>
+                    <td style="font-weight: 800; font-family: monospace; color: #0284c7;">{{ row.balances.in_transit_stock }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                        No product inventory balances calculated.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

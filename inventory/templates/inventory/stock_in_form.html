@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock In Entry | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="stock-in-form-content" style="max-width: 750px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <h1 class="page-title">Stock In Entry</h1>
+            <div class="page-subtitle">Add inventory stock to a warehouse location</div>
+        </div>
+        <a href="{% url 'inventory-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round">arrow_back</span>
+            <span>Back to Inventory</span>
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="side-card" style="padding: 30px;">
+        <form method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert-item alert-danger" style="padding: 15px; margin-bottom: 10px;">
+                <span class="material-icons-round alert-item-icon">error</span>
+                <div class="alert-message">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Product & Warehouse -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Select Product <span style="color: var(--danger-color);">*</span></label>
+                    {{ form.product }}
+                    {% if form.product.errors %}<div class="form-error">{{ form.product.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Destination Warehouse <span style="color: var(--danger-color);">*</span></label>
+                    {{ form.warehouse }}
+                    {% if form.warehouse.errors %}<div class="form-error">{{ form.warehouse.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Quantity & Unit Cost -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Stock In Quantity <span style="color: var(--danger-color);">*</span></label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}<div class="form-error">{{ form.quantity.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Unit Cost Rate ($)</label>
+                    {{ form.unit_cost }}
+                    {% if form.unit_cost.errors %}<div class="form-error">{{ form.unit_cost.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Reference Number & Reason -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">Reference Number</label>
+                    {{ form.reference_number }}
+                    {% if form.reference_number.errors %}<div class="form-error">{{ form.reference_number.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason / Source</label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}<div class="form-error">{{ form.reason.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+                <label class="form-label">Additional Notes</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors.0 }}</div>{% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <a href="{% url 'inventory-list' %}" class="btn-demo" style="text-decoration: none; padding: 12px 24px;">Cancel</a>
+                <button type="submit" class="page-actions-btn" style="background-color: var(--success-color); padding: 12px 24px;">
+                    <span class="material-icons-round">add_circle</span>
+                    <span>Confirm Stock In</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify OCR Bill Scan #{{ scan.scan_id }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="verification-page-container" style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">OCR Scan Verification & Verification Split View</h1>
+            <div class="page-subtitle">Compare original document with AI extracted fields before creating Purchase entry</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'ocr-upload' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Scan Another Bill</span>
+            </a>
+            <a href="{% url 'ocr-history' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">history</span>
+                <span>Scan Log</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Duplicate Invoice Warning Banner -->
+    {% if duplicate_purchase %}
+    <div class="alert-item alert-warning" style="padding: 15px; background-color: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning-color);">
+        <span class="material-icons-round alert-item-icon" style="color: var(--warning-color);">warning</span>
+        <div class="alert-message">
+            <strong>Possible Duplicate Invoice Detected!</strong> An existing Purchase Bill 
+            <a href="{% url 'purchase-detail' duplicate_purchase.id %}" target="_blank" style="font-weight: 700; color: var(--warning-color); text-decoration: underline;">
+                #{{ duplicate_purchase.bill_number }}
+            </a> 
+            was already recorded for Supplier <strong>{{ duplicate_purchase.supplier.name }}</strong> on {{ duplicate_purchase.purchase_date|date:"Y-m-d" }}.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- SPLIT-SCREEN LAYOUT -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+        
+        <!-- LEFT PANEL: Original Document Viewer -->
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px; position: sticky; top: 80px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons-round" style="font-size: 18px; color: var(--primary-color);">preview</span>
+                    <span>Original Document Viewer</span>
+                </h3>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="nav-action-btn" id="zoomInBtn" title="Zoom In"><span class="material-icons-round">zoom_in</span></button>
+                    <button type="button" class="nav-action-btn" id="zoomOutBtn" title="Zoom Out"><span class="material-icons-round">zoom_out</span></button>
+                    <button type="button" class="nav-action-btn" id="rotateBtn" title="Rotate Document"><span class="material-icons-round">rotate_right</span></button>
+                </div>
+            </div>
+
+            <!-- Document Image / PDF Container -->
+            <div style="background-color: #1e293b; border-radius: 8px; overflow: auto; max-height: 700px; display: flex; justify-content: center; align-items: center; padding: 15px;">
+                {% if scan.file_type == 'pdf' %}
+                    <iframe src="{{ scan.document.url }}" id="docViewerIframe" style="width: 100%; height: 600px; border: none;"></iframe>
+                {% else %}
+                    <img src="{{ scan.document.url }}" id="docViewerImg" alt="Bill Preview" style="max-width: 100%; height: auto; transition: transform 0.3s ease; transform-origin: center;">
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Extracted Data & Editable Fields -->
+        <div class="side-card" style="padding: 25px;">
+            <form method="POST" action="{% url 'ocr-verify' scan.id %}" style="display: flex; flex-direction: column; gap: 20px;">
+                {% csrf_token %}
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                        AI Extracted Verification Form
+                    </h3>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Overall Confidence:</span>
+                        {% if scan.overall_confidence >= 80 %}
+                            <span class="badge badge-success" style="font-size: 0.85rem;">{{ scan.overall_confidence }}%</span>
+                        {% elif scan.overall_confidence >= 50 %}
+                            <span class="badge badge-warning" style="font-size: 0.85rem; background-color: var(--warning-light); color: var(--warning-color);">{{ scan.overall_confidence }}%</span>
+                        {% else %}
+                            <span class="badge badge-danger" style="font-size: 0.85rem;">{{ scan.overall_confidence }}%</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Section 1: Header Fields -->
+                <div>
+                    <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 12px;">1. Header & Supplier Information</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label class="form-label">Invoice Number</label>
+                            {{ form.invoice_number }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Invoice Date</label>
+                            {{ form.invoice_date }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Matched Supplier Catalog</label>
+                            {{ form.matched_supplier }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Receiving Warehouse</label>
+                            {{ form.warehouse }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Line Items -->
+                <div>
+                    <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 12px;">2. Extracted Line Items Table</h4>
+                    <div class="table-responsive">
+                        <table class="custom-table" style="font-size: 0.82rem;">
+                            <thead>
+                                <tr>
+                                    <th>Extracted Text</th>
+                                    <th>Matched Catalog Product</th>
+                                    <th>Qty</th>
+                                    <th>Rate</th>
+                                    <th>Total</th>
+                                    <th style="text-align: center;">Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                                        <strong>{{ item.raw_product_name }}</strong>
+                                        <div style="font-size: 0.72rem; color: var(--text-muted);">HSN: {{ item.hsn_code|default:"-" }}</div>
+                                    </td>
+                                    <td>
+                                        <select name="product_id[]" class="input-control" style="font-size: 0.8rem; padding: 4px 8px;">
+                                            <option value="">Select Catalog Product...</option>
+                                            {% for p in products %}
+                                                <option value="{{ p.id }}" {% if p.id == item.matched_product.id %}selected{% endif %}>{{ p.name }} (SKU: {{ p.sku }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td><input type="number" name="quantity[]" class="input-control" value="{{ item.quantity }}" style="width: 70px; padding: 4px;" min="1"></td>
+                                    <td><input type="number" name="rate[]" class="input-control" value="{{ item.rate }}" step="0.01" style="width: 80px; padding: 4px;"></td>
+                                    <td><strong>${{ item.total_amount }}</strong></td>
+                                    <td style="text-align: center;">
+                                        {% if item.confidence_score >= 80 %}
+                                            <span class="badge badge-success" style="font-size: 0.75rem;">{{ item.confidence_score }}%</span>
+                                        {% else %}
+                                            <span class="badge badge-warning" style="font-size: 0.75rem; background-color: var(--warning-light); color: var(--warning-color);">{{ item.confidence_score }}%</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 3: Financial Totals -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <div class="form-group">
+                            <label class="form-label">Subtotal</label>
+                            {{ form.subtotal }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tax Amount</label>
+                            {{ form.tax_amount }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Discount</label>
+                            {{ form.discount_amount }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Grand Total</label>
+                            {{ form.grand_total }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px;">
+                    <button type="submit" name="save_verification" class="btn-demo" style="padding: 10px 20px;">
+                        <span class="material-icons-round">save</span>
+                        <span>Save Corrections</span>
+                    </button>
+                    <button type="submit" name="convert_to_purchase" class="page-actions-btn" style="padding: 10px 24px; background-color: var(--success-color);">
+                        <span class="material-icons-round">shopping_cart_checkout</span>
+                        <span>Create Purchase Entry</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const img = document.getElementById('docViewerImg');
+    const zoomIn = document.getElementById('zoomInBtn');
+    const zoomOut = document.getElementById('zoomOutBtn');
+    const rotate = document.getElementById('rotateBtn');
+
+    let scale = 1;
+    let rotation = 0;
+
+    if (img) {
+        zoomIn.addEventListener('click', function() {
+            scale += 0.2;
+            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+        });
+
+        zoomOut.addEventListener('click', function() {
+            if (scale > 0.4) {
+                scale -= 0.2;
+                img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+            }
+        });
+
+        rotate.addEventListener('click', function() {
+            rotation = (rotation + 90) % 360;
+            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+        });
+    }
+});
+</script>
+{% endblock %}

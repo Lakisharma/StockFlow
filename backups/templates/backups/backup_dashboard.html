@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Backup & Data Safety Hub | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Backup & Data Safety Hub</h1>
+            <div class="page-subtitle">Real backend database dumps, media file archiving, SHA-256 integrity verification, and pre-restore safety guards</div>
+        </div>
+        <div class="page-actions">
+            <button class="page-actions-btn" onclick="openModal('createBackupModal')">
+                <span class="material-icons-round">backup</span>
+                <span>Create System Backup</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Backup Metrics Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+            <div style="width: 44px; height: 44px; border-radius: 8px; background-color: rgba(59, 130, 246, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">history</span>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Last Backup</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">
+                    {% if metrics.last_backup %}{{ metrics.last_backup.created_at|date:"d M, H:i" }}{% else %}No Backups{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+            <div style="width: 44px; height: 44px; border-radius: 8px; background-color: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">sd_storage</span>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Storage Used</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">
+                    {{ metrics.total_storage_mb }} MB
+                </div>
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+            <div style="width: 44px; height: 44px; border-radius: 8px; background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">inventory_2</span>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total Archives</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">
+                    {{ metrics.total_backups }} Backups
+                </div>
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 16px; display: flex; align-items: center; gap: 15px;">
+            <div style="width: 44px; height: 44px; border-radius: 8px; background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">restore</span>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Last Restore</div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">
+                    {% if metrics.last_restore %}{{ metrics.last_restore.restored_at|date:"d M, H:i" }}{% else %}Never{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Grid: Backup History + Retention Settings Panel -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+        <!-- Left Column: Backup History Table -->
+        <div class="side-card" style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">Backup History Log</h3>
+
+                <!-- Filter Controls -->
+                <form method="GET" style="display: flex; gap: 10px;">
+                    <select name="type" class="input-control" style="width: 140px; padding: 6px 10px; font-size: 0.8rem;" onchange="this.form.submit()">
+                        <option value="">All Types</option>
+                        <option value="manual" {% if type_filter == 'manual' %}selected{% endif %}>Manual</option>
+                        <option value="automatic" {% if type_filter == 'automatic' %}selected{% endif %}>Automatic</option>
+                        <option value="before_restore" {% if type_filter == 'before_restore' %}selected{% endif %}>Safety Backup</option>
+                    </select>
+
+                    <select name="status" class="input-control" style="width: 140px; padding: 6px 10px; font-size: 0.8rem;" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="restore_completed" {% if status_filter == 'restore_completed' %}selected{% endif %}>Restored</option>
+                        <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color); text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">
+                            <th style="padding: 10px;">Backup ID / Name</th>
+                            <th style="padding: 10px;">Type</th>
+                            <th style="padding: 10px;">Created Date</th>
+                            <th style="padding: 10px;">Size</th>
+                            <th style="padding: 10px;">Status</th>
+                            <th style="padding: 10px; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in backups %}
+                        <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.88rem;">
+                            <td style="padding: 12px 10px;">
+                                <a href="{% url 'backup-detail' b.id %}" style="font-weight: 700; color: var(--primary-color); text-decoration: none;">
+                                    {{ b.backup_id }}
+                                </a>
+                                <div style="font-size: 0.78rem; color: var(--text-muted);">{{ b.backup_name }}</div>
+                            </td>
+                            <td style="padding: 12px 10px;">
+                                <span class="badge" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; {% if b.backup_type == 'before_restore' %}background-color: rgba(245, 158, 11, 0.15); color: #d97706;{% else %}background-color: rgba(59, 130, 246, 0.15); color: #2563eb;{% endif %}">
+                                    {{ b.get_backup_type_display }}
+                                </span>
+                            </td>
+                            <td style="padding: 12px 10px; color: var(--text-muted); font-size: 0.82rem;">
+                                {{ b.created_at|date:"d M Y, H:i" }}
+                            </td>
+                            <td style="padding: 12px 10px; font-weight: 600;">
+                                {{ b.file_size_mb }} MB
+                            </td>
+                            <td style="padding: 12px 10px;">
+                                <span class="badge" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; {% if b.status == 'completed' or b.status == 'restore_completed' %}background-color: rgba(16, 185, 129, 0.15); color: #059669;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                                    {{ b.get_status_display }}
+                                </span>
+                                {% if b.verification_status == 'verified' %}
+                                <span class="material-icons-round" style="font-size: 16px; color: #10b981; vertical-align: middle;" title="SHA-256 Verified">verified</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px 10px; text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                                    <a href="{% url 'backup-detail' b.id %}" class="btn-demo" style="padding: 4px 8px;" title="View Details">
+                                        <span class="material-icons-round" style="font-size: 16px;">visibility</span>
+                                    </a>
+                                    <a href="{% url 'backup-download' b.id %}" class="btn-demo" style="padding: 4px 8px;" title="Download Archive">
+                                        <span class="material-icons-round" style="font-size: 16px;">download</span>
+                                    </a>
+                                    <button class="btn-demo" style="padding: 4px 8px; color: #d97706;" onclick="openRestoreModal('{{ b.id }}', '{{ b.backup_id }}')" title="Restore Database">
+                                        <span class="material-icons-round" style="font-size: 16px;">restore</span>
+                                    </button>
+                                    <form method="POST" action="{% url 'backup-delete' b.id %}" style="display: inline;" onsubmit="return confirm('Permanently delete backup {{ b.backup_id }}?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-demo" style="padding: 4px 8px; color: #dc2626;" title="Delete Backup">
+                                            <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                No system backup archives found. Click "Create System Backup" to generate a complete data backup.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column: Automated Backup & Retention Settings -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="side-card" style="padding: 20px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Automatic Schedule & Retention</h3>
+                
+                <form method="POST" action="{% url 'backup-settings-save' %}">
+                    {% csrf_token %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; font-size: 0.9rem;">
+                            <input type="checkbox" name="auto_backup_enabled" {% if metrics.settings.auto_backup_enabled %}checked{% endif %}>
+                            <span>Enable Automatic Scheduled Backup</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label">Backup Frequency</label>
+                        <select name="frequency" class="input-control">
+                            <option value="daily" {% if metrics.settings.frequency == 'daily' %}selected{% endif %}>Daily (Every 24 Hours)</option>
+                            <option value="weekly" {% if metrics.settings.frequency == 'weekly' %}selected{% endif %}>Weekly (Every 7 Days)</option>
+                            <option value="monthly" {% if metrics.settings.frequency == 'monthly' %}selected{% endif %}>Monthly (Every 30 Days)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label">Scheduled Backup Time (24h)</label>
+                        <input type="time" name="backup_time" class="input-control" value="{{ metrics.settings.backup_time }}">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Retention Policy</label>
+                        <select name="retention_policy" class="input-control">
+                            <option value="keep_5" {% if metrics.settings.retention_policy == 'keep_5' %}selected{% endif %}>Keep Last 5 Backups</option>
+                            <option value="keep_10" {% if metrics.settings.retention_policy == 'keep_10' %}selected{% endif %}>Keep Last 10 Backups</option>
+                            <option value="keep_30" {% if metrics.settings.retention_policy == 'keep_30' %}selected{% endif %}>Keep Last 30 Backups</option>
+                        </select>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Oldest archives are automatically cleaned up to save server storage space.</div>
+                    </div>
+
+                    <button type="submit" class="page-actions-btn" style="width: 100%; justify-content: center;">Save Backup Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create Backup Confirmation -->
+<div id="createBackupModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: var(--bg-card); width: 450px; border-radius: 12px; padding: 25px; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(59, 130, 246, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">backup</span>
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main);">Create System Backup</h3>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Package full database & media files</div>
+            </div>
+        </div>
+
+        <form method="POST" action="{% url 'backup-create' %}">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label">Backup Name / Label (Optional)</label>
+                <input type="text" name="backup_name" class="input-control" placeholder="e.g. Pre-Audit Quarterly Backup">
+            </div>
+
+            <div style="background-color: var(--bg-body); border-radius: 6px; padding: 12px; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">
+                Includes: Users, Roles, Products, Categories, Suppliers, Warehouses, Purchases, Inventory, Transfers, OCR Logs, System Settings, and Media Uploads.
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-demo" onclick="closeModal('createBackupModal')">Cancel</button>
+                <button type="submit" class="page-actions-btn">Start Backup Generation</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Restore Backup Safety Warning -->
+<div id="restoreBackupModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: var(--bg-card); width: 480px; border-radius: 12px; padding: 25px; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(245, 158, 11, 0.1); color: #d97706; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-round">warning</span>
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main);">Confirm System Restoration</h3>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Restoring data replaces current database state</div>
+            </div>
+        </div>
+
+        <p style="font-size: 0.88rem; color: var(--text-main); margin-bottom: 15px;">
+            Are you sure you want to restore the system state from backup archive <strong id="restoreBackupIdLabel"></strong>?
+        </p>
+
+        <div style="background-color: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 12px; font-size: 0.8rem; color: #b45309; border-radius: 4px; margin-bottom: 20px;">
+            <strong>Safety Guard Active:</strong> StockFlow AI will automatically generate a fresh <em>Safety Backup</em> of your current data before applying the restore.
+        </div>
+
+        <form id="restoreBackupForm" method="POST" action="">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-demo" onclick="closeModal('restoreBackupModal')">Cancel</button>
+                <button type="submit" class="page-actions-btn" style="background-color: #d97706;">Confirm & Restore Data</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+    }
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+    function openRestoreModal(pk, backupId) {
+        document.getElementById('restoreBackupIdLabel').innerText = backupId;
+        document.getElementById('restoreBackupForm').action = '/backups/' + pk + '/restore/';
+        openModal('restoreBackupModal');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}OCR Scan History | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="ocr-history-content" style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">OCR Scan History & Logs</h1>
+            <div class="page-subtitle">Track document processing statuses, confidence metrics, and purchase conversions</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'ocr-upload' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">document_scanner</span>
+                <span>New Bill Scan</span>
+            </a>
+            <a href="{% url 'ocr-export-csv' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">download</span>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div class="metric-card">
+            <div class="metric-label">Total Documents Scanned</div>
+            <div class="metric-value">{{ summary.total_scans }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--success-color);">
+            <div class="metric-label">High Confidence Scans (&ge;80%)</div>
+            <div class="metric-value" style="color: var(--success-color);">{{ summary.high_confidence_count }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--warning-color);">
+            <div class="metric-label">Needs Review</div>
+            <div class="metric-value" style="color: var(--warning-color);">{{ summary.needs_review_count }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--primary-color);">
+            <div class="metric-label">Converted to Purchases</div>
+            <div class="metric-value" style="color: var(--primary-color);">{{ summary.converted_count }}</div>
+        </div>
+    </div>
+
+    <!-- Filters & Search Bar Card -->
+    <div class="side-card" style="padding: 20px;">
+        <form method="GET" action="{% url 'ocr-history' %}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Search</label>
+                <input type="text" name="q" class="input-control" placeholder="Scan ID, Filename, Invoice #..." value="{{ search_query }}">
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Scan Status</label>
+                <select name="status" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    {% for key, label in statuses %}
+                        <option value="{{ key }}" {% if selected_status == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; flex: 1;">Filter</button>
+                <a href="{% url 'ocr-history' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; justify-content: center;" title="Reset Filters">
+                    <span class="material-icons-round">refresh</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Scans Table Card -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Scan ID</th>
+                        <th>File Name</th>
+                        <th>Type</th>
+                        <th>Invoice #</th>
+                        <th>Supplier</th>
+                        <th style="text-align: right;">Grand Total</th>
+                        <th style="text-align: center;">Confidence</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for scan in scans %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'ocr-verify' scan.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">
+                                {{ scan.scan_id }}
+                            </a>
+                        </td>
+                        <td>{{ scan.original_filename }}</td>
+                        <td><span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ scan.get_file_type_display }}</span></td>
+                        <td><code>{{ scan.invoice_number|default:"-" }}</code></td>
+                        <td><strong>{{ scan.matched_supplier.name|default:scan.supplier_raw_name }}</strong></td>
+                        <td style="text-align: right; font-weight: 700;">${{ scan.grand_total }}</td>
+                        <td style="text-align: center;">
+                            {% if scan.overall_confidence >= 80 %}
+                                <span class="badge badge-success">{{ scan.overall_confidence }}%</span>
+                            {% elif scan.overall_confidence >= 50 %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">{{ scan.overall_confidence }}%</span>
+                            {% else %}
+                                <span class="badge badge-danger">{{ scan.overall_confidence }}%</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if scan.status == 'converted' %}
+                                <span class="badge badge-success">Converted</span>
+                            {% elif scan.status == 'needs_review' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Needs Review</span>
+                            {% elif scan.status == 'completed' %}
+                                <span class="badge badge-info">Completed</span>
+                            {% else %}
+                                <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ scan.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <a href="{% url 'ocr-verify' scan.id %}" class="nav-action-btn" title="Verify & Review">
+                                    <span class="material-icons-round" style="font-size: 18px;">rate_review</span>
+                                </a>
+                                <a href="{% url 'ocr-detail' scan.id %}" class="nav-action-btn" title="View Audit Detail">
+                                    <span class="material-icons-round" style="font-size: 18px;">visibility</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 10px;">document_scanner</span>
+                            No OCR scan logs found matching your criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Page <strong>{{ page_obj.number }}</strong> of <strong>{{ paginator.num_pages }}</strong>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&status={{ selected_status }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Previous</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&status={{ selected_status }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

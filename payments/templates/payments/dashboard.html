@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Finance & Payments Dashboard | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Finance & Payments Dashboard</h1>
+            <div class="page-subtitle">Track customer receivables, supplier payables, bank/cash balances, and financial health</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'payment-create' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">add</span>
+                <span>+ Record Payment</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #16a34a;">TOTAL RECEIVABLES</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: #16a34a; margin-top: 4px;">₹{{ total_receivables|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;"><a href="{% url 'receivables-list' %}" style="color: var(--primary-color); text-decoration: none;">View Receivables &rarr;</a></div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #dc2626;">TOTAL PAYABLES</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: #dc2626; margin-top: 4px;">₹{{ total_payables|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;"><a href="{% url 'payables-list' %}" style="color: var(--primary-color); text-decoration: none;">View Payables &rarr;</a></div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #2563eb;">COLLECTED TODAY</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: #2563eb; margin-top: 4px;">₹{{ rec_today|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">Customer Inflow</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #d97706;">PAID TODAY</div>
+            <div style="font-size: 1.7rem; font-weight: 800; color: #d97706; margin-top: 4px;">₹{{ paid_today|floatformat:2 }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">Supplier Outflow</div>
+        </div>
+    </div>
+
+    <!-- Bank / Account Balances Cards -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Cash & Bank Accounts</h3>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+            {% for acc in accounts %}
+            <div style="padding: 14px; background: var(--bg-hover); border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">{{ acc.get_account_type_display|upper }}</div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">{{ acc.account_name }}</div>
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary-color); margin-top: 8px;">₹{{ acc.current_balance|floatformat:2 }}</div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1 / -1; color: var(--text-muted); font-size: 0.85rem;">No payment accounts configured yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="side-card" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Recent Financial Transactions</h3>
+            <a href="{% url 'payment-list' %}" style="color: var(--primary-color); text-decoration: none; font-size: 0.85rem; font-weight: 700;">View All Transactions &rarr;</a>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Payment Number</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Party</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in recent_payments %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ p.payment_number }}</td>
+                    <td>{{ p.payment_date|date:"d M Y" }}</td>
+                    <td><span style="font-size: 0.78rem; font-weight: 700;">{{ p.get_payment_type_display }}</span></td>
+                    <td style="font-weight: 700;">{% if p.customer %}{{ p.customer.name }}{% elif p.supplier %}{{ p.supplier.name }}{% else %}General{% endif %}</td>
+                    <td>{{ p.get_payment_method_display }}</td>
+                    <td style="font-weight: 800; color: {% if p.payment_type == 'customer_payment' %}#16a34a{% else %}#dc2626{% endif %};">₹{{ p.amount|floatformat:2 }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if p.status == 'completed' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background-color: rgba(220, 38, 38, 0.15); color: #dc2626;{% endif %}">
+                            {{ p.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No payment transactions recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchase Orders | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="purchase-orders-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Purchase Orders (PO)</h1>
+            <div class="page-subtitle">Draft and release purchase orders to suppliers prior to receiving stock shipments</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="page-actions-btn" onclick="alert('Purchase Order creation form will load in modal.')">
+                <span class="material-icons-round">add</span>
+                <span>Create Purchase Order</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card" style="margin-top: 20px;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>PO Number</th>
+                        <th>Supplier</th>
+                        <th>Warehouse</th>
+                        <th>Order Date</th>
+                        <th>Expected Delivery</th>
+                        <th>Grand Total</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ o.po_number }}</td>
+                        <td>{{ o.supplier.name }}</td>
+                        <td>{{ o.warehouse.name }}</td>
+                        <td>{{ o.order_date|date:"M d, Y" }}</td>
+                        <td>{{ o.expected_delivery_date|date:"M d, Y"|default:"-" }}</td>
+                        <td style="font-weight: 700;">${{ o.grand_total|floatformat:2 }}</td>
+                        <td>
+                            {% if o.status == 'draft' %}
+                                <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">Draft</span>
+                            {% elif o.status == 'sent' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Sent</span>
+                            {% elif o.status == 'approved' %}
+                                <span class="badge badge-success">Approved</span>
+                            {% elif o.status == 'received' or o.status == 'partially_received' %}
+                                <span class="badge badge-info">Received</span>
+                            {% else %}
+                                <span class="badge badge-danger">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="nav-action-btn" title="View details" onclick="alert('PO details modal.')">
+                                    <span class="material-icons-round" style="font-size: 16px;">visibility</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; margin-bottom: 12px; display: block;">assignment</span>
+                            No purchase orders found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

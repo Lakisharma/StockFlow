@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchase Invoice Details: {{ purchase.invoice_number }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="purchase-detail-content" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Invoice #{{ purchase.invoice_number }}</h1>
+            <div class="page-subtitle">Supplier: <strong>{{ purchase.supplier.name }}</strong> | Warehouse: <strong>{{ purchase.warehouse.name }}</strong></div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'purchase-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Back to List</span>
+            </a>
+            {% if purchase.status == 'draft' or purchase.status == 'pending' %}
+            <a href="{% url 'purchase-edit' purchase.id %}" class="page-actions-btn" style="text-decoration: none; background-color: var(--warning-color); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: #ffffff;">edit</span>
+                <span style="color: #ffffff;">Edit Purchase</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'purchase-delete' purchase.id %}" class="page-actions-btn" style="text-decoration: none; background-color: var(--danger-color); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">cancel</span>
+                <span>Cancel Invoice</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;">
+        <!-- Subtotal -->
+        <div class="metric-card">
+            <div class="metric-label">Subtotal</div>
+            <div class="metric-value">${{ purchase.subtotal|floatformat:2 }}</div>
+        </div>
+        <!-- Discount -->
+        <div class="metric-card" style="border-left-color: var(--warning-color);">
+            <div class="metric-label">Discount</div>
+            <div class="metric-value" style="color: var(--warning-color);">${{ purchase.discount_amount|floatformat:2 }}</div>
+        </div>
+        <!-- Total Tax -->
+        <div class="metric-card" style="border-left-color: var(--primary-color);">
+            <div class="metric-label">GST Tax</div>
+            <div class="metric-value" style="color: var(--primary-color);">${{ purchase.tax_amount|floatformat:2 }}</div>
+        </div>
+        <!-- Grand Total -->
+        <div class="metric-card" style="border-left-color: var(--text-main);">
+            <div class="metric-label">Grand Total</div>
+            <div class="metric-value">${{ purchase.grand_total|floatformat:2 }}</div>
+        </div>
+        <!-- Paid -->
+        <div class="metric-card" style="border-left-color: var(--success-color);">
+            <div class="metric-label">Paid</div>
+            <div class="metric-value" style="color: var(--success-color);">${{ purchase.paid_amount|floatformat:2 }}</div>
+        </div>
+        <!-- Pending -->
+        <div class="metric-card" style="border-left-color: var(--danger-color);">
+            <div class="metric-label">Pending Balance</div>
+            <div class="metric-value" style="color: var(--danger-color);">${{ purchase.pending_amount|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <!-- Main Detail Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 25px; align-items: start;">
+        <!-- Left Section: Items, Payments, & Returns -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Purchase Items -->
+            <div class="side-card" style="padding: 25px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                    Invoice Product Items
+                </h3>
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Product Details</th>
+                                <th>Rate</th>
+                                <th>Qty</th>
+                                <th>Free Qty</th>
+                                <th>Disc %</th>
+                                <th>GST %</th>
+                                <th style="text-align: right;">GST Amt</th>
+                                <th style="text-align: right;">Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in purchase.items.all %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">SKU: <code>{{ item.product.sku }}</code></span>
+                                </td>
+                                <td>${{ item.rate|floatformat:2 }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.free_quantity }}</td>
+                                <td>{{ item.discount_percent }}%</td>
+                                <td>{{ item.gst_percent }}%</td>
+                                <td style="text-align: right; font-weight: 600;">${{ item.gst_amount|floatformat:2 }}</td>
+                                <td style="text-align: right; font-weight: 700; color: var(--text-main);">${{ item.total_amount|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payments History -->
+            <div class="side-card" style="padding: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                        Payment History
+                    </h3>
+                    {% if purchase.pending_amount > 0 %}
+                    <button class="page-actions-btn" style="padding: 6px 12px; font-size: 0.82rem;" onclick="document.getElementById('paymentFormContainer').style.display='block'">
+                        <span class="material-icons-round" style="font-size: 16px;">add</span>
+                        <span>Add Payment</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Add Payment Form Box (Hidden by default) -->
+                <div id="paymentFormContainer" style="display: none; background-color: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="font-size: 0.88rem; font-weight: 600; margin-bottom: 12px; color: var(--text-main);">Log Payment Transaction</h4>
+                    <form method="POST" action="{% url 'purchase-payment-add' purchase.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="purchase" value="{{ purchase.id }}">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group">
+                                <label class="form-label">Payment Amount ($)</label>
+                                <input type="number" name="amount" class="input-control" step="0.01" max="{{ purchase.pending_amount }}" value="{{ purchase.pending_amount }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Payment Date</label>
+                                <input type="date" name="payment_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Payment Method</label>
+                                <select name="payment_method" class="input-control">
+                                    <option value="cash">Cash</option>
+                                    <option value="bank">Bank Transfer</option>
+                                    <option value="upi">UPI</option>
+                                    <option value="cheque">Cheque</option>
+                                    <option value="card">Card</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ref / Transaction ID</label>
+                                <input type="text" name="reference_number" class="input-control" placeholder="TXN12345678">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn-demo" style="padding: 6px 12px;" onclick="document.getElementById('paymentFormContainer').style.display='none'">Cancel</button>
+                            <button type="submit" class="page-actions-btn" style="padding: 6px 12px;">Submit Payment</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Payment Date</th>
+                                <th>Method</th>
+                                <th>Reference Number</th>
+                                <th style="text-align: right;">Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pay in purchase.payments.all %}
+                            <tr>
+                                <td>{{ pay.payment_date|date:"M d, Y" }}</td>
+                                <td style="text-transform: capitalize;">{{ pay.payment_method }}</td>
+                                <td><code>{{ pay.reference_number|default:"-" }}</code></td>
+                                <td style="text-align: right; font-weight: 700; color: var(--success-color);">${{ pay.amount|floatformat:2 }}</td>
+                                <td>
+                                    {% if pay.status == 'completed' %}
+                                        <span class="badge badge-success">Completed</span>
+                                    {% elif pay.status == 'pending' %}
+                                        <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Pending</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                    No payments registered yet for this invoice.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Returns History & Processing -->
+            <div class="side-card" style="padding: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                        Purchase Returns
+                    </h3>
+                    {% if purchase.status == 'received' or purchase.status == 'completed' %}
+                    <button class="page-actions-btn" style="padding: 6px 12px; font-size: 0.82rem; background-color: var(--danger-color);" onclick="document.getElementById('returnFormContainer').style.display='block'">
+                        <span class="material-icons-round" style="font-size: 16px;">assignment_return</span>
+                        <span>Return Items</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Add Return Form Box (Hidden by default) -->
+                <div id="returnFormContainer" style="display: none; background-color: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="font-size: 0.88rem; font-weight: 600; margin-bottom: 12px; color: var(--text-main);">Process Product Returns</h4>
+                    <form method="POST" action="{% url 'purchase-return-add' purchase.id %}">
+                        {% csrf_token %}
+                        <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">Return Date</label>
+                                    <input type="date" name="return_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Reason</label>
+                                    <input type="text" name="reason" class="input-control" placeholder="Damaged items, wrong specs..." required>
+                                </div>
+                            </div>
+                            
+                            <table class="custom-table" style="margin-top: 10px;">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Purchased Qty</th>
+                                        <th>Return Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in purchase.items.all %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>
+                                            <input type="number" name="return_qty[]" class="input-control" min="0" max="{{ item.quantity }}" value="0" style="width: 80px; padding: 4px 8px;">
+                                            <input type="hidden" name="item_id[]" value="{{ item.product.id }}">
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn-demo" style="padding: 6px 12px;" onclick="document.getElementById('returnFormContainer').style.display='none'">Cancel</button>
+                            <button type="submit" class="page-actions-btn" style="padding: 6px 12px; background-color: var(--danger-color);">Submit Return</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Return Number</th>
+                                <th>Date</th>
+                                <th>Reason</th>
+                                <th style="text-align: right;">Refund Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ret in purchase.returns.all %}
+                            <tr>
+                                <td><code>{{ ret.return_number }}</code></td>
+                                <td>{{ ret.return_date|date:"M d, Y" }}</td>
+                                <td>{{ ret.reason|default:"-" }}</td>
+                                <td style="text-align: right; font-weight: 700; color: var(--danger-color);">${{ ret.total_return_amount|floatformat:2 }}</td>
+                                <td>
+                                    {% if ret.status == 'completed' %}
+                                        <span class="badge badge-success">Completed</span>
+                                    {% else %}
+                                        <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">{{ ret.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                    No returns logged for this invoice.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section: Invoice Info Panel -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Purchase Status Profile Summary -->
+            <div class="side-card" style="padding: 25px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <div class="icon-primary" style="width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-icons-round" style="font-size: 36px;">receipt_long</span>
+                </div>
+                <div>
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">Invoice Details</h3>
+                    <div style="display: flex; gap: 6px; justify-content: center; margin-top: 8px;">
+                        {% if purchase.status == 'draft' %}
+                            <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">Draft</span>
+                        {% elif purchase.status == 'received' or purchase.status == 'completed' %}
+                            <span class="badge badge-success">Stock Received</span>
+                        {% elif purchase.status == 'cancelled' %}
+                            <span class="badge badge-danger">Cancelled</span>
+                        {% elif purchase.status == 'returned' %}
+                            <span class="badge badge-danger" style="background-color: var(--danger-light); color: var(--danger-color);">Returned</span>
+                        {% else %}
+                            <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">{{ purchase.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supplier Connection Panel -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin: 0;">
+                    Supplier Connection
+                </h4>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">
+                    {{ purchase.supplier.name }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px;">
+                    <div>Code: <code>{{ purchase.supplier.code }}</code></div>
+                    <div>Phone: {{ purchase.supplier.phone }}</div>
+                    {% if purchase.supplier.gstin %}
+                        <div>GSTIN: <code>{{ purchase.supplier.gstin }}</code></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Documents Preview Panel -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin: 0;">
+                    Uploaded Bills / Files
+                </h4>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Invoice file slot -->
+                    {% if purchase.invoice_file %}
+                    <div style="border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-main);">
+                        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 180px;">
+                            <span class="material-icons-round" style="color: var(--primary-color);">picture_as_pdf</span>
+                            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Invoice PDF</span>
+                        </div>
+                        <a href="{{ purchase.invoice_file.url }}" target="_blank" class="nav-action-btn" title="Download File">
+                            <span class="material-icons-round" style="font-size: 16px;">download</span>
+                        </a>
+                    </div>
+                    {% else %}
+                    <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px; border: 1px dashed var(--border-color); border-radius: 6px;">
+                        No invoice file uploaded.
+                    </div>
+                    {% endif %}
+
+                    <!-- Supporting documents slot -->
+                    {% if purchase.supporting_document %}
+                    <div style="border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; display: flex; align-items: center; justify-content: space-between; background-color: var(--bg-main);">
+                        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 180px;">
+                            <span class="material-icons-round" style="color: var(--warning-color);">description</span>
+                            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Supporting Doc</span>
+                        </div>
+                        <a href="{{ purchase.supporting_document.url }}" target="_blank" class="nav-action-btn" title="Download File">
+                            <span class="material-icons-round" style="font-size: 16px;">download</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

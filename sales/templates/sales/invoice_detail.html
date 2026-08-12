@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invoice {{ invoice.invoice_number }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'invoice-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Invoices</a>
+            </div>
+            <h1 class="page-title">Sales Invoice Inspector: <span style="font-family: monospace;">{{ invoice.invoice_number }}</span></h1>
+            <div class="page-subtitle">Billing details, tax breakdown, and payment status tracking</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'invoice-print' invoice.id %}" target="_blank" class="btn-demo" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">print</span>
+                <span>Print Invoice</span>
+            </a>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Customer Details</h3>
+            <div style="font-size: 0.9rem;">Customer Name: <strong style="color: var(--text-main);">{{ invoice.customer.name }}</strong></div>
+            <div style="font-size: 0.9rem;">GSTIN: <strong>{{ invoice.customer.gstin|default:'N/A' }}</strong></div>
+            <div style="font-size: 0.9rem;">Billing Address: <strong>{{ invoice.customer.billing_address }}</strong></div>
+        </div>
+
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Invoice Financial Summary</h3>
+            <div style="font-size: 0.9rem;">Invoice Date: <strong>{{ invoice.invoice_date|date:"d M Y" }}</strong></div>
+            <div style="font-size: 0.9rem;">Grand Total: <strong style="color: var(--primary-color); font-size: 1.1rem;">₹{{ invoice.grand_total|floatformat:2 }}</strong></div>
+            <div style="font-size: 0.9rem;">Payment Status: 
+                <span class="badge" style="padding: 4px 10px; font-weight: 800; background-color: rgba(245, 158, 11, 0.15); color: #d97706;">
+                    {{ invoice.get_payment_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

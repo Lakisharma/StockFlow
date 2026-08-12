@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}System Settings & Company Profile | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">System Settings & Configuration Hub</h1>
+            <div class="page-subtitle">Configure enterprise company profile, tax rules, invoice prefixes, OCR AI engine, and security policies</div>
+        </div>
+    </div>
+
+    <!-- Main Layout: 12-Section Sidebar Navigation + Tabbed Panel -->
+    <div style="display: grid; grid-template-columns: 260px 1fr; gap: 25px;">
+
+        <!-- Section Navigation Sidebar -->
+        <div class="side-card" style="padding: 15px; height: fit-content;">
+            <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; padding: 0 10px;">
+                Configuration Sections
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <a href="?section=company" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'company' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">business</span>
+                    <span>1. Company Profile</span>
+                </a>
+
+                <a href="?section=business" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'business' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">badge</span>
+                    <span>2. Business Information</span>
+                </a>
+
+                <a href="?section=tax" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'tax' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">receipt_long</span>
+                    <span>3. Tax / GST Settings</span>
+                </a>
+
+                <a href="?section=invoice" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'invoice' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">request_quote</span>
+                    <span>4. Invoice Settings</span>
+                </a>
+
+                <a href="?section=currency" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'currency' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">monetization_on</span>
+                    <span>5. Currency & Regional</span>
+                </a>
+
+                <a href="?section=warehouse" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'warehouse' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">store</span>
+                    <span>6. Warehouse Settings</span>
+                </a>
+
+                <a href="?section=inventory" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'inventory' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">inventory_2</span>
+                    <span>7. Inventory Settings</span>
+                </a>
+
+                <a href="?section=purchase" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'purchase' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">shopping_cart</span>
+                    <span>8. Purchase Settings</span>
+                </a>
+
+                <a href="?section=ocr" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'ocr' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">psychology</span>
+                    <span>9. OCR / AI Engine</span>
+                </a>
+
+                <a href="?section=notification" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'notification' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">notifications</span>
+                    <span>10. Notifications</span>
+                </a>
+
+                <a href="?section=security" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'security' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">security</span>
+                    <span>11. Security Policy</span>
+                </a>
+
+                <a href="?section=preferences" class="btn-demo" style="text-decoration: none; text-align: left; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; {% if active_section == 'preferences' %}background-color: var(--primary-color); color: #fff; border-color: var(--primary-color);{% endif %}">
+                    <span class="material-icons-round" style="font-size: 20px;">tune</span>
+                    <span>12. Preferences</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Section Content Form Panel -->
+        <div class="side-card" style="padding: 30px;">
+
+            {% if active_section == 'company' %}
+            <!-- SECTION 1: COMPANY PROFILE -->
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="company">
+
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    1. Company Profile & Branding
+                </h3>
+
+                <!-- Live Company Card Preview Widget -->
+                <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 10px;">Live Company Card Preview</div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div style="width: 50px; height: 50px; border-radius: 8px; background-color: var(--primary-color); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem;">
+                            {{ company.company_name|slice:":2"|upper }}
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">{{ company.company_name }}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">{{ company.address }}, {{ company.city }}, {{ company.state }} - {{ company.pin_code }}</div>
+                            <div style="font-size: 0.8rem; color: var(--primary-color); margin-top: 2px;">GSTIN: {{ business.gstin }} &bull; {{ company.email }} &bull; {{ company.phone }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Company Name *</label>
+                        <input type="text" name="company_name" class="input-control" required value="{{ company.company_name }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Legal Business Name</label>
+                        <input type="text" name="legal_name" class="input-control" value="{{ company.legal_name }}">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Business Type</label>
+                        <input type="text" name="business_type" class="input-control" value="{{ company.business_type }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" class="input-control" required value="{{ company.email }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Phone *</label>
+                        <input type="text" name="phone" class="input-control" required value="{{ company.phone }}">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Alternate Phone</label>
+                        <input type="text" name="alt_phone" class="input-control" value="{{ company.alt_phone|default:'' }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Website URL</label>
+                        <input type="url" name="website" class="input-control" value="{{ company.website }}">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Address</label>
+                    <textarea name="address" class="input-control" rows="2">{{ company.address }}</textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">City</label>
+                        <input type="text" name="city" class="input-control" value="{{ company.city }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">State</label>
+                        <input type="text" name="state" class="input-control" value="{{ company.state }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Country</label>
+                        <input type="text" name="country" class="input-control" value="{{ company.country }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">PIN Code</label>
+                        <input type="text" name="pin_code" class="input-control" value="{{ company.pin_code }}">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label class="form-label">Upload Company Logo (For Invoices & Reports)</label>
+                    <input type="file" name="company_logo" class="input-control" accept="image/*">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Save Company Profile</button>
+                </div>
+            </form>
+
+            {% elif active_section == 'tax' %}
+            <!-- SECTION 3: TAX / GST SETTINGS -->
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="tax">
+
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    3. Tax / GST Settings
+                </h3>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                        <input type="checkbox" name="gst_enabled" {% if tax.gst_enabled %}checked{% endif %}>
+                        <span>Enable GST Calculation System</span>
+                    </label>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Default GST Rate (%)</label>
+                        <input type="number" step="0.01" name="default_gst_rate" class="input-control" value="{{ tax.default_gst_rate }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">CGST Rate (%)</label>
+                        <input type="number" step="0.01" name="cgst_rate" class="input-control" value="{{ tax.cgst_rate }}">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">SGST Rate (%)</label>
+                        <input type="number" step="0.01" name="sgst_rate" class="input-control" value="{{ tax.sgst_rate }}">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Pricing Tax Type</label>
+                        <select name="price_tax_type" class="input-control">
+                            <option value="exclusive" {% if tax.price_tax_type == 'exclusive' %}selected{% endif %}>Tax Exclusive (Add tax to item rate)</option>
+                            <option value="inclusive" {% if tax.price_tax_type == 'inclusive' %}selected{% endif %}>Tax Inclusive (Tax included in item rate)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin: 0; display: flex; align-items: flex-end;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" name="hsn_required" {% if tax.hsn_required %}checked{% endif %}>
+                            <span>Mandatory HSN/SAC Code Entry</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Save Tax Settings</button>
+                </div>
+            </form>
+
+            {% elif active_section == 'ocr' %}
+            <!-- SECTION 9: OCR / AI SETTINGS -->
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="ocr">
+
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    9. OCR / AI Bill Scanner Configuration
+                </h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">OCR AI Provider Engine</label>
+                        <select name="provider" class="input-control">
+                            <option value="gemini" {% if ocr.provider == 'gemini' %}selected{% endif %}>Google Gemini AI Engine</option>
+                            <option value="tesseract" {% if ocr.provider == 'tesseract' %}selected{% endif %}>Tesseract OCR Engine</option>
+                            <option value="google_vision" {% if ocr.provider == 'google_vision' %}selected{% endif %}>Google Cloud Vision API</option>
+                            <option value="azure" {% if ocr.provider == 'azure' %}selected{% endif %}>Azure Document Intelligence</option>
+                            <option value="aws" {% if ocr.provider == 'aws' %}selected{% endif %}>AWS Textract</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Model Selection</label>
+                        <input type="text" name="model_name" class="input-control" value="{{ ocr.model_name }}">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">API Key (Secure Masked Storage)</label>
+                    <input type="password" name="api_key" class="input-control" value="{{ ocr.api_key_masked }}" placeholder="Enter new API Key">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">API keys are stored securely on the backend and never exposed to the browser.</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label class="form-label">Confidence Score Threshold (%)</label>
+                    <input type="number" name="confidence_threshold" class="input-control" value="{{ ocr.confidence_threshold }}">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Save OCR / AI Settings</button>
+                </div>
+            </form>
+
+            {% else %}
+            <!-- GENERIC SECTION FORM -->
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="{{ active_section }}">
+
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: capitalize;">
+                    {{ active_section }} Configuration
+                </h3>
+
+                {% if active_section == 'business' %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;"><label class="form-label">GSTIN</label><input type="text" name="gstin" class="input-control" value="{{ business.gstin }}"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">PAN</label><input type="text" name="pan" class="input-control" value="{{ business.pan }}"></div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Registration Number</label><input type="text" name="registration_number" class="input-control" value="{{ business.registration_number }}"></div>
+
+                {% elif active_section == 'invoice' %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Sales Prefix</label><input type="text" name="sales_prefix" class="input-control" value="{{ invoice.sales_prefix }}"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Purchase Prefix</label><input type="text" name="purchase_prefix" class="input-control" value="{{ invoice.purchase_prefix }}"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Transfer Prefix</label><input type="text" name="transfer_prefix" class="input-control" value="{{ invoice.transfer_prefix }}"></div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;"><label class="form-label">Invoice Footer Text</label><textarea name="footer_text" class="input-control" rows="2">{{ invoice.footer_text }}</textarea></div>
+
+                {% elif active_section == 'currency' %}
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Currency Code</label><input type="text" name="currency_code" class="input-control" value="{{ currency.currency_code }}"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Symbol</label><input type="text" name="currency_symbol" class="input-control" value="{{ currency.currency_symbol }}"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Timezone</label><input type="text" name="timezone" class="input-control" value="{{ currency.timezone }}"></div>
+                </div>
+
+                {% else %}
+                <p style="color: var(--text-muted);">Configure standard preferences for {{ active_section }}. All parameters are backed by Django database models.</p>
+                {% endif %}
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 25px;">
+                    <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Save {{ active_section|title }} Settings</button>
+                </div>
+            </form>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

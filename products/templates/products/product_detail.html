@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Product Details: {{ product.name }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="product-detail-content" style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Product Profile</h1>
+            <div class="page-subtitle">Detailed configuration, pricing, barcode, and history logs</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'product-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Back to List</span>
+            </a>
+            <a href="{% url 'product-edit' product.id %}" class="page-actions-btn" style="text-decoration: none; background-color: var(--warning-color); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: #ffffff;">edit</span>
+                <span style="color: #ffffff;">Edit Product</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Detail Grid -->
+    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 25px; flex-wrap: wrap;">
+        <!-- Left Side: Product Image & Barcode Panel -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Image Card -->
+            <div class="side-card" style="padding: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <div style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); background-color: var(--bg-main); display: flex; align-items: center; justify-content: center;">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <span class="material-icons-round" style="font-size: 64px; color: var(--text-muted);">inventory_2</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">{{ product.name }}</h3>
+                    <code style="font-size: 0.85rem; color: var(--primary-color);">SKU: {{ product.sku }}</code>
+                </div>
+            </div>
+
+            <!-- Barcode & QR Card -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Barcode Preview -->
+                <div>
+                    <h4 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px;">Barcode</h4>
+                    <div style="background-color: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                        <!-- Mock CSS-based Barcode layout representing EAN/UPC -->
+                        <div style="display: flex; height: 50px; width: 140px; background-color: #ffffff; align-items: flex-end; justify-content: space-between;">
+                            {% for bar in "1234123412341234"|make_list %}
+                                <div style="width: {% if forloop.counter|divisibleby:3 %}3px{% elif forloop.counter|divisibleby:2 %}1px{% else %}2px{% endif %}; height: 100%; background-color: #000000;"></div>
+                            {% endfor %}
+                        </div>
+                        <span style="font-size: 0.8rem; font-family: monospace; color: #000000; letter-spacing: 2px;">
+                            {{ product.barcode|default:"123456789012" }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- QR Code Preview -->
+                <div>
+                    <h4 style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px;">QR Code</h4>
+                    <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <!-- Dynamic QR generation using secure public API service -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ product.sku }}" alt="QR Code" style="width: 110px; height: 110px;">
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">Scan to load SKU metadata</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Details & Tabs Panel -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Profile Info Card -->
+            <div class="side-card" style="padding: 30px; display: flex; flex-direction: column; gap: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Product Metadata</h3>
+                    {% if product.status == 'active' %}
+                        <span class="badge badge-success">Active</span>
+                    {% else %}
+                        <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </div>
+
+                <!-- Specifications Fields Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Category</div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">{{ product.category.name }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Brand</div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">{{ product.brand.name|default:"-" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Unit of Measure</div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">{{ product.unit.name }} ({{ product.unit.short_name }})</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">HSN Code</div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);"><code>{{ product.hsn_code|default:"-" }}</code></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Description</div>
+                    <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.6; margin: 0;">
+                        {{ product.description|default:"No description provided." }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Pricing & Inventory Metrics Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; flex-wrap: wrap;">
+                <!-- Pricing Card -->
+                <div class="side-card" style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        Pricing & Tax
+                    </h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Purchase Price</span>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-top: 2px;">${{ product.purchase_price }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Selling Price</span>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color); margin-top: 2px;">${{ product.selling_price }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">MRP</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px;">${{ product.mrp }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Discount</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--danger-color); margin-top: 2px;">${{ product.discount }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">GST Rate</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px;">{{ product.gst_rate }}%</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Tax Type</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px; text-transform: capitalize;">{{ product.tax_type }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Levels Card -->
+                <div class="side-card" style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                    <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        Stock Levels
+                    </h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Current Stock</span>
+                            <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">{{ product.current_stock }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Stock Status</span>
+                            <div style="margin-top: 4px;">
+                                {% if product.stock_status == 'In Stock' %}
+                                    <span class="badge badge-success">In Stock</span>
+                                {% elif product.stock_status == 'Low Stock' %}
+                                    <span class="badge badge-danger" style="background-color: var(--warning-light); color: var(--warning-color);">Low Stock</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Out of Stock</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Minimum Level</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px;">{{ product.min_stock_level }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Maximum Level</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px;">{{ product.max_stock_level }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Opening Stock</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px;">{{ product.opening_stock }}</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Warehouse</span>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px;">{{ product.warehouse.name|default:"-" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Logs / Product History -->
+            <div class="side-card" style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    Activity Logs & History
+                </h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                    {% for log in history_logs %}
+                    <div style="display: flex; gap: 12px; font-size: 0.88rem; align-items: flex-start;">
+                        <!-- Bullet Icon -->
+                        <div style="margin-top: 4px; width: 8px; height: 8px; border-radius: 50%; background-color: var(--primary-color); flex-shrink: 0;"></div>
+                        <!-- Log Content -->
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                <strong style="color: var(--text-main); font-size: 0.85rem; text-transform: capitalize;">{{ log.action }}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ log.created_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">{{ log.detail }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px;">
+                        No history logs recorded for this product yet.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

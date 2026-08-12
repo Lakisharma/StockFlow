@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Bill Scanner | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="ocr-scanner-content" style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">AI Purchase Bill Scanner</h1>
+            <div class="page-subtitle">Upload purchase invoices (Images or PDFs) for instant AI text extraction and catalog matching</div>
+        </div>
+        <a href="{% url 'ocr-history' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round">history</span>
+            <span>Scan History</span>
+        </a>
+    </div>
+
+    <!-- Upload Box Card -->
+    <div class="side-card" style="padding: 40px; text-align: center; border: 2px dashed var(--primary-color); background-color: var(--bg-card);">
+        <form method="POST" enctype="multipart/form-data" id="ocrUploadForm">
+            {% csrf_token %}
+            
+            <div id="dropArea" style="cursor: pointer; padding: 20px;">
+                <span class="material-icons-round" style="font-size: 64px; color: var(--primary-color); margin-bottom: 15px;">cloud_upload</span>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                    Drag & Drop Purchase Bill Here
+                </h3>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+                    Supports <strong>JPG, JPEG, PNG, WEBP, and PDF</strong> documents up to 20MB.
+                </p>
+
+                <div style="display: inline-block;">
+                    <label for="documentUpload" class="page-actions-btn" style="padding: 12px 24px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                        <span class="material-icons-round">folder_open</span>
+                        <span>Browse File</span>
+                    </label>
+                    <input type="file" name="document" id="documentUpload" accept=".jpg,.jpeg,.png,.webp,.pdf" required style="display: none;">
+                </div>
+            </div>
+
+            <!-- File Selected Preview & Progress Animation -->
+            <div id="filePreviewContainer" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 15px;">
+                    <span class="material-icons-round" style="color: var(--primary-color);">description</span>
+                    <span id="fileNameSpan" style="font-weight: 700; color: var(--text-main);">filename.pdf</span>
+                    <span id="fileSizeSpan" style="font-size: 0.8rem; color: var(--text-muted);">(0 MB)</span>
+                </div>
+
+                <!-- Step-by-Step Progress Pipeline -->
+                <div id="progressPipeline" style="display: none; max-width: 600px; margin: 0 auto 20px;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-color); margin-bottom: 8px;" id="progressStageLabel">
+                        Uploading Document...
+                    </div>
+                    <div style="height: 8px; width: 100%; background-color: var(--border-color); border-radius: 4px; overflow: hidden;">
+                        <div id="progressBarFill" style="height: 100%; width: 15%; background-color: var(--primary-color); transition: width 0.4s ease;"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+                    <button type="button" class="btn-demo" id="clearFileBtn" style="padding: 10px 20px;">Clear File</button>
+                    <button type="submit" class="page-actions-btn" id="startScanBtn" style="padding: 10px 24px; background-color: var(--success-color);">
+                        <span class="material-icons-round">document_scanner</span>
+                        <span>Scan Bill with AI</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Recent Scans Quick Cards -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Recent Bill Scans
+        </h3>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Scan ID</th>
+                        <th>Filename</th>
+                        <th>Supplier</th>
+                        <th>Invoice #</th>
+                        <th style="text-align: center;">Confidence</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for scan in recent_scans %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'ocr-verify' scan.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">
+                                {{ scan.scan_id }}
+                            </a>
+                        </td>
+                        <td>{{ scan.original_filename }}</td>
+                        <td>{{ scan.matched_supplier.name|default:scan.supplier_raw_name }}</td>
+                        <td><code>{{ scan.invoice_number|default:"-" }}</code></td>
+                        <td style="text-align: center;">
+                            {% if scan.overall_confidence >= 80 %}
+                                <span class="badge badge-success">{{ scan.overall_confidence }}%</span>
+                            {% elif scan.overall_confidence >= 50 %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">{{ scan.overall_confidence }}%</span>
+                            {% else %}
+                                <span class="badge badge-danger">{{ scan.overall_confidence }}%</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="badge badge-info">{{ scan.get_status_display }}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'ocr-verify' scan.id %}" class="nav-action-btn" title="Verify & Review">
+                                <span class="material-icons-round" style="font-size: 18px;">rate_review</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No scan history yet. Upload a bill to start.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('documentUpload');
+    const previewContainer = document.getElementById('filePreviewContainer');
+    const fileNameSpan = document.getElementById('fileNameSpan');
+    const fileSizeSpan = document.getElementById('fileSizeSpan');
+    const clearBtn = document.getElementById('clearFileBtn');
+    const form = document.getElementById('ocrUploadForm');
+    const pipeline = document.getElementById('progressPipeline');
+    const stageLabel = document.getElementById('progressStageLabel');
+    const barFill = document.getElementById('progressBarFill');
+
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const f = this.files[0];
+            fileNameSpan.textContent = f.name;
+            fileSizeSpan.textContent = `(${(f.size / (1024 * 1024)).toFixed(2)} MB)`;
+            previewContainer.style.display = 'block';
+        }
+    });
+
+    clearBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        previewContainer.style.display = 'none';
+    });
+
+    form.addEventListener('submit', function() {
+        pipeline.style.display = 'block';
+        const stages = [
+            { text: "Uploading Document...", width: "25%" },
+            { text: "Reading Document Text...", width: "45%" },
+            { text: "Detecting Invoice Header & Supplier...", width: "65%" },
+            { text: "Identifying Product Line Items...", width: "85%" },
+            { text: "Preparing Purchase Entry...", width: "95%" }
+        ];
+
+        let idx = 0;
+        const interval = setInterval(function() {
+            if (idx < stages.length) {
+                stageLabel.textContent = stages[idx].text;
+                barFill.style.width = stages[idx].width;
+                idx++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 300);
+    });
+});
+</script>
+{% endblock %}

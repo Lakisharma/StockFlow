@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profit & Loss Statement | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Profit & Loss Statement (P&L)</h1>
+            <div class="page-subtitle">Income, Cost of Goods Sold (COGS), Gross Profit, Operating Expenses, and Net Profit</div>
+        </div>
+    </div>
+
+    <!-- P&L Table Card -->
+    <div class="side-card" style="padding: 24px; max-width: 850px;">
+        <table class="data-table">
+            <thead>
+                <tr style="background: var(--bg-hover);">
+                    <th>Financial Particulars</th>
+                    <th style="text-align: right;">Amount (₹)</th>
+                    <th style="text-align: right;">% of Net Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 800; color: var(--primary-color);">Gross Sales Revenue</td>
+                    <td style="text-align: right; font-weight: 800;">₹{{ fin.gross_revenue|floatformat:2 }}</td>
+                    <td style="text-align: right;">-</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px; color: var(--text-muted);">- Less: GST Output Tax Collected</td>
+                    <td style="text-align: right; color: var(--text-muted);">₹{{ fin.output_tax|floatformat:2 }}</td>
+                    <td style="text-align: right;">-</td>
+                </tr>
+                <tr style="font-weight: 800; background: var(--bg-hover);">
+                    <td>Net Sales Revenue</td>
+                    <td style="text-align: right; color: var(--text-main);">₹{{ fin.net_sales|floatformat:2 }}</td>
+                    <td style="text-align: right;">100.0%</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px; color: #dc2626;">- Less: Cost of Goods Sold (COGS)</td>
+                    <td style="text-align: right; color: #dc2626;">₹{{ fin.cogs|floatformat:2 }}</td>
+                    <td style="text-align: right;">-</td>
+                </tr>
+                <tr style="font-weight: 800; font-size: 1.1rem; background: rgba(34, 197, 94, 0.1);">
+                    <td style="color: #16a34a;">GROSS PROFIT</td>
+                    <td style="text-align: right; color: #16a34a;">₹{{ fin.gross_profit|floatformat:2 }}</td>
+                    <td style="text-align: right; color: #16a34a;">{{ fin.gross_margin_pct|floatformat:1 }}%</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px; color: #d97706;">- Less: Operating Expenses</td>
+                    <td style="text-align: right; color: #d97706;">₹{{ fin.total_expenses|floatformat:2 }}</td>
+                    <td style="text-align: right;">-</td>
+                </tr>
+                <tr style="font-weight: 800; font-size: 1.2rem; background: rgba(37, 99, 235, 0.15);">
+                    <td style="color: {% if fin.net_profit >= 0 %}#16a34a{% else %}#dc2626{% endif %};">NET PROFIT</td>
+                    <td style="text-align: right; color: {% if fin.net_profit >= 0 %}#16a34a{% else %}#dc2626{% endif %};">₹{{ fin.net_profit|floatformat:2 }}</td>
+                    <td style="text-align: right; color: {% if fin.net_profit >= 0 %}#16a34a{% else %}#dc2626{% endif %};">{{ fin.net_margin_pct|floatformat:1 }}%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

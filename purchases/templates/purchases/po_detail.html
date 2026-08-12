@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PO {{ po.po_number }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'po-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Purchase Orders</a>
+            </div>
+            <h1 class="page-title">Purchase Order Inspector: <span style="font-family: monospace;">{{ po.po_number }}</span></h1>
+            <div class="page-subtitle">PO details, approval state timeline, and receiving progress breakdown</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'po-print' po.id %}" target="_blank" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">print</span>
+                <span>Print PO</span>
+            </a>
+            {% if po.status == 'approved' or po.status == 'partially_received' %}
+            <a href="{% url 'grn-create' %}?po={{ po.id }}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">local_shipping</span>
+                <span>+ Create Goods Receipt (GRN)</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Status & Approval Timeline Card -->
+    <div class="side-card" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">CURRENT STATUS</div>
+            <div style="margin-top: 4px;">
+                <span class="badge" style="padding: 6px 14px; font-size: 0.9rem; font-weight: 800; {% if po.status == 'approved' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif po.status == 'pending_approval' %}background-color: rgba(245, 158, 11, 0.15); color: #d97706;{% elif po.status == 'partially_received' %}background-color: rgba(59, 130, 246, 0.15); color: #2563eb;{% elif po.status == 'received' %}background-color: rgba(16, 185, 129, 0.2); color: #059669;{% elif po.status == 'rejected' %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% else %}background-color: rgba(156, 163, 175, 0.15); color: #4b5563;{% endif %}">
+                    {{ po.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Approval Actions -->
+        {% if po.status == 'draft' %}
+        <form method="POST" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit">
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Submit for Approval</button>
+        </form>
+        {% elif po.status == 'pending_approval' %}
+        <div style="display: flex; gap: 10px;">
+            <button onclick="document.getElementById('rejectModal').style.display='flex'" class="btn-demo" style="color: #dc2626; padding: 10px 18px;">Reject PO</button>
+            <form method="POST" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="approve">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Approve PO</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- PO Information Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Supplier Details</h3>
+            <div style="font-size: 0.9rem;">Supplier Name: <strong style="color: var(--text-main);">{{ po.supplier.name }}</strong></div>
+            <div style="font-size: 0.9rem;">GSTIN: <strong>{{ po.supplier.gstin|default:'N/A' }}</strong></div>
+            <div style="font-size: 0.9rem;">Email: <strong>{{ po.supplier.email|default:'N/A' }}</strong></div>
+            <div style="font-size: 0.9rem;">Phone: <strong>{{ po.supplier.phone|default:'N/A' }}</strong></div>
+        </div>
+
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Order Specifications</h3>
+            <div style="font-size: 0.9rem;">Destination Warehouse: <strong style="color: var(--text-main);">{{ po.warehouse.name }}</strong></div>
+            <div style="font-size: 0.9rem;">PO Date: <strong>{{ po.order_date|date:"d M Y" }}</strong></div>
+            <div style="font-size: 0.9rem;">Expected Delivery Date: <strong>{{ po.expected_delivery_date|date:"d M Y"|default:"N/A" }}</strong></div>
+            <div style="font-size: 0.9rem;">Payment Terms: <strong>{{ po.payment_terms }}</strong></div>
+            <div style="font-size: 0.9rem;">Created By: <strong>{{ po.created_by.username|default:'System' }}</strong></div>
+        </div>
+    </div>
+
+    <!-- Ordered Items & Receiving Progress Comparison Table -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Itemized Receiving Comparison</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Ordered Qty</th>
+                    <th>Received Qty</th>
+                    <th>Accepted Qty</th>
+                    <th>Damaged Qty</th>
+                    <th>Remaining Qty</th>
+                    <th>Unit Rate (₹)</th>
+                    <th>Line Total (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in item_summary %}
+                <tr>
+                    <td style="font-weight: 700; color: var(--text-main);">
+                        {{ row.item.product.name }}
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">SKU: {{ row.item.product.sku }}</div>
+                    </td>
+                    <td style="font-weight: 800;">{{ row.ordered }}</td>
+                    <td style="color: #2563eb; font-weight: 700;">{{ row.received }}</td>
+                    <td style="color: #16a34a; font-weight: 800;">{{ row.accepted }}</td>
+                    <td style="color: #dc2626; font-weight: 700;">{{ row.damaged }}</td>
+                    <td style="font-weight: 800; color: {% if row.remaining > 0 %}#d97706{% else %}#16a34a{% endif %};">{{ row.remaining }}</td>
+                    <td>₹{{ row.item.rate|floatformat:2 }}</td>
+                    <td style="font-weight: 800;">₹{{ row.item.total_amount|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Financial Valuation Summary -->
+    <div class="side-card" style="padding: 20px; display: flex; justify-content: flex-end;">
+        <div style="width: 300px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>Subtotal:</span>
+                <strong>₹{{ po.subtotal|floatformat:2 }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Tax Amount (GST):</span>
+                <strong>₹{{ po.tax_amount|floatformat:2 }}</strong>
+            </div>
+            <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+            <div style="display: flex; justify-content: space-between; font-size: 1.2rem; color: var(--primary-color);">
+                <span>Grand Total:</span>
+                <strong>₹{{ po.grand_total|floatformat:2 }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Reject PO -->
+<div id="rejectModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000;">
+    <div class="side-card" style="width: 450px; padding: 24px; max-width: 90%;">
+        <h3 style="font-size: 1.1rem; font-weight: 800; color: #dc2626; margin-bottom: 15px;">Reject Purchase Order</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Rejection Reason / Notes</label>
+                <textarea name="notes" class="input-control" rows="3" required placeholder="Specify reason for rejection..."></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="document.getElementById('rejectModal').style.display='none'" class="btn-demo" style="padding: 8px 16px;">Cancel</button>
+                <button type="submit" class="page-actions-btn" style="background-color: #dc2626; padding: 8px 18px;">Confirm Reject</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

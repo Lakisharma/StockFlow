@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Monthly Attendance Calendar | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'attendance-dashboard' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Attendance Dashboard</a>
+            </div>
+            <h1 class="page-title">Monthly Attendance Calendar</h1>
+            <div class="page-subtitle">Monthly attendance, check-in history, and leaves by employee</div>
+        </div>
+    </div>
+
+    <!-- Employee Selector Form -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: flex; gap: 12px; align-items: center;">
+            <select name="employee" class="input-control" style="max-width: 300px;">
+                {% for emp in employees %}
+                <option value="{{ emp.id }}" {% if selected_employee and selected_employee.id == emp.id %}selected{% endif %}>{{ emp.full_name }} ({{ emp.employee_code }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Load Calendar</button>
+        </form>
+    </div>
+
+    <!-- Calendar Table -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 16px;">Attendance Register for {{ selected_employee.full_name|default:'Staff' }}</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Working Hours</th>
+                    <th>Late (Mins)</th>
+                    <th>Overtime (Hrs)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in attendances %}
+                <tr>
+                    <td style="font-weight: 700;">{{ a.date|date:"d M Y (D)" }}</td>
+                    <td>{{ a.check_in|time:"H:i"|default:'-' }}</td>
+                    <td>{{ a.check_out|time:"H:i"|default:'-' }}</td>
+                    <td style="font-weight: 800;">{{ a.working_hours }} hrs</td>
+                    <td style="color: {% if a.late_minutes > 0 %}#dc2626{% else %}var(--text-muted){% endif %};">{{ a.late_minutes }}</td>
+                    <td style="color: #16a34a;">{{ a.overtime_hours }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if a.status == 'present' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif a.status == 'late' %}background-color: rgba(217, 119, 6, 0.15); color: #d97706;{% else %}background-color: rgba(37, 99, 235, 0.15); color: #2563eb;{% endif %}">
+                            {{ a.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No attendance records for this month.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

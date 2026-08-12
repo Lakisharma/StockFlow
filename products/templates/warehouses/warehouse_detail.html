@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Warehouse Details: {{ warehouse.name }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="warehouse-detail-content" style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Warehouse Details</h1>
+            <div class="page-subtitle">Configure warehouse storage volumes, managers, capacity units, and operational constraints</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'warehouse-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Back to List</span>
+            </a>
+            <a href="{% url 'warehouse-edit' warehouse.id %}" class="page-actions-btn" style="text-decoration: none; background-color: var(--warning-color); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: #ffffff;">edit</span>
+                <span style="color: #ffffff;">Edit Warehouse</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <!-- Total Products -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--primary-light); color: var(--primary-color);">
+                <span class="material-icons-round">category</span>
+            </div>
+            <div class="metric-value">{{ total_products }}</div>
+            <div class="metric-label">Total Products</div>
+        </div>
+        <!-- Total Stock Quantity -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--success-light); color: var(--success-color);">
+                <span class="material-icons-round">inventory_2</span>
+            </div>
+            <div class="metric-value">{{ total_stock_qty }}</div>
+            <div class="metric-label">Total Stock Quantity</div>
+        </div>
+        <!-- Inventory Value -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--warning-light); color: var(--warning-color);">
+                <span class="material-icons-round">payments</span>
+            </div>
+            <div class="metric-value">${{ inventory_value|floatformat:2 }}</div>
+            <div class="metric-label">Inventory Value</div>
+        </div>
+        <!-- Low/Out of Stock Items -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--danger-light); color: var(--danger-color);">
+                <span class="material-icons-round">report_problem</span>
+            </div>
+            <div class="metric-value">{{ low_stock_items }} / {{ out_of_stock_items }}</div>
+            <div class="metric-label">Low / Out of Stock</div>
+        </div>
+    </div>
+
+    <!-- Main Detail Grid -->
+    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 25px; flex-wrap: wrap;">
+        <!-- Left Column: Warehouse Identity, Address, and Contacts -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Profile Summary Card -->
+            <div class="side-card" style="padding: 25px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-color); background-color: var(--bg-main); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 2.2rem;">
+                    {% if warehouse.logo %}
+                        <img src="{{ warehouse.logo.url }}" alt="{{ warehouse.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        {{ warehouse.name|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">{{ warehouse.name }}</h3>
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">{{ warehouse.get_warehouse_type_display }}</span>
+                    <div style="margin-top: 8px;">
+                        {% if warehouse.status == 'active' %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capacity Progress Utilization Card -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin: 0;">
+                    Capacity Utilization
+                </h4>
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">
+                    {{ utilization_percentage }}% Used
+                </div>
+                <!-- Progress bar container -->
+                <div style="background-color: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; width: 100%;">
+                    <div style="background-color: var(--primary-color); height: 100%; width: {{ utilization_percentage }}%; border-radius: 4px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                    <span>Used: {{ used_capacity }} {{ warehouse.capacity_unit }}</span>
+                    <span>Total Limit: {{ warehouse.total_capacity }} {{ warehouse.capacity_unit }}</span>
+                </div>
+            </div>
+
+            <!-- Contact & Address Panel -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Contacts -->
+                <div>
+                    <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.5px;">Contact Info</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.88rem;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+                            <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">person</span>
+                            <span>Manager: {{ warehouse.manager_name|default:"-" }}</span>
+                        </div>
+                        {% if warehouse.phone %}
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+                            <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">phone</span>
+                            <span>{{ warehouse.phone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if warehouse.email %}
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main); word-break: break-all;">
+                            <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">email</span>
+                            <span>{{ warehouse.email }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div>
+                    <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.5px;">Complete Address</h4>
+                    <div style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6;">
+                        {{ warehouse.address|default:"No address config" }}<br>
+                        {{ warehouse.city }}, {{ warehouse.state }} - {{ warehouse.pin_code }}<br>
+                        {{ warehouse.country }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Stored Stock list & Activities logs -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Stored Stock list Panel -->
+            <div class="side-card" style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    Stored Products & Stock Level
+                </h3>
+                
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Product Details</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Brand</th>
+                                <th>Unit</th>
+                                <th>Current Stock</th>
+                                <th>Minimum Stock</th>
+                                <th>Stock Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in warehouse_stocks %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'product-detail' stock.product.id %}" style="font-weight: 600; color: var(--primary-color); text-decoration: none;">
+                                        {{ stock.product.name }}
+                                    </a>
+                                </td>
+                                <td><code>{{ stock.product.sku }}</code></td>
+                                <td>{{ stock.product.category.name }}</td>
+                                <td>{{ stock.product.brand.name|default:"-" }}</td>
+                                <td><code>{{ stock.product.unit.short_name }}</code></td>
+                                <td style="font-weight: 700; color: var(--text-main);">{{ stock.quantity }}</td>
+                                <td>{{ stock.min_stock_level }}</td>
+                                <td>
+                                    {% if stock.stock_status == 'In Stock' %}
+                                        <span class="badge badge-success">In Stock</span>
+                                    {% elif stock.stock_status == 'Low Stock' %}
+                                        <span class="badge badge-danger" style="background-color: var(--warning-light); color: var(--warning-color);">Low Stock</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Out of Stock</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'product-detail' stock.product.id %}" class="nav-action-btn" title="View Product" style="width: 28px; height: 28px;">
+                                        <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                    No products stored in this warehouse currently.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Activity History Logs -->
+            <div class="side-card" style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    Recent Activities Timeline
+                </h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; max-height: 250px; overflow-y: auto;">
+                    {% for log in history_logs %}
+                    <div style="display: flex; gap: 12px; font-size: 0.88rem; align-items: flex-start;">
+                        <div style="margin-top: 4px; width: 8px; height: 8px; border-radius: 50%; background-color: var(--primary-color); flex-shrink: 0;"></div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                <strong style="color: var(--text-main); font-size: 0.85rem; text-transform: capitalize;">{{ log.action }}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ log.created_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">{{ log.detail }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px;">
+                        No activities logged for this warehouse.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

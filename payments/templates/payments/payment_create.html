@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Record Payment | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'payment-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Payment Transactions</a>
+            </div>
+            <h1 class="page-title">Record Payment / Financial Transaction</h1>
+            <div class="page-subtitle">Record customer collections, supplier payments, and account allocations</div>
+        </div>
+    </div>
+
+    <div class="side-card" style="padding: 24px; max-width: 800px;">
+        <form method="POST">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Payment Number</label>
+                    <input type="text" class="input-control" value="{{ auto_payment_number }}" readonly style="font-family: monospace; font-weight: 800; background: var(--bg-hover);">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Transaction Type</label>
+                    <select name="payment_type" id="paymentTypeSelect" class="input-control" onchange="togglePartyFields()" required>
+                        <option value="customer_payment" {% if sel_invoice %}selected{% endif %}>Customer Payment (Inflow)</option>
+                        <option value="supplier_payment" {% if sel_purchase %}selected{% endif %}>Supplier Payment (Outflow)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Customer Field -->
+            <div id="customerDiv" style="margin-bottom: 18px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Customer</label>
+                <select name="customer" class="input-control">
+                    <option value="">Select Customer</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}" {% if sel_invoice and sel_invoice.customer.id == c.id %}selected{% endif %}>
+                        {{ c.name }} (Outstanding: ₹{{ c.outstanding_amount|floatformat:2 }})
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if sel_invoice %}
+                <input type="hidden" name="invoice" value="{{ sel_invoice.id }}">
+                <div style="font-size: 0.8rem; color: var(--primary-color); margin-top: 4px; font-weight: 700;">
+                    Linked Invoice: {{ sel_invoice.invoice_number }} (Outstanding: ₹{{ sel_invoice.grand_total|floatformat:2 }})
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Supplier Field -->
+            <div id="supplierDiv" style="margin-bottom: 18px; display: none;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Supplier</label>
+                <select name="supplier" class="input-control">
+                    <option value="">Select Supplier</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}" {% if sel_purchase and sel_purchase.supplier.id == s.id %}selected{% endif %}>
+                        {{ s.name }} (Payable: ₹{{ s.outstanding_balance|floatformat:2 }})
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if sel_purchase %}
+                <input type="hidden" name="purchase" value="{{ sel_purchase.id }}">
+                <div style="font-size: 0.8rem; color: var(--primary-color); margin-top: 4px; font-weight: 700;">
+                    Linked Purchase: {{ sel_purchase.invoice_number }} (Payable: ₹{{ sel_purchase.grand_total|floatformat:2 }})
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Amount (₹)</label>
+                    <input type="number" name="amount" step="0.01" class="input-control" value="{% if sel_invoice %}{{ sel_invoice.grand_total }}{% elif sel_purchase %}{{ sel_purchase.total_amount }}{% endif %}" required style="font-weight: 800; font-size: 1.1rem;">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Payment Method</label>
+                    <select name="payment_method" class="input-control" required>
+                        <option value="bank_transfer">Bank Transfer (NEFT/RTGS/IMPS)</option>
+                        <option value="upi">UPI / Online</option>
+                        <option value="cash">Cash</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="card">Credit/Debit Card</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Payment Account</label>
+                    <select name="account" class="input-control" required>
+                        {% for a in accounts %}
+                        <option value="{{ a.id }}">{{ a.account_name }} ({{ a.get_account_type_display }}) - Bal: ₹{{ a.current_balance|floatformat:2 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Reference / UTR / Cheque No.</label>
+                    <input type="text" name="reference_number" class="input-control" placeholder="e.g. UTR12345678" style="font-family: monospace;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Notes / Remarks</label>
+                <textarea name="notes" class="input-control" rows="3" placeholder="Additional payment notes..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <a href="{% url 'payment-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 20px;">Cancel</a>
+                <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Record Transaction</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function togglePartyFields() {
+    const val = document.getElementById('paymentTypeSelect').value;
+    if (val === 'customer_payment') {
+        document.getElementById('customerDiv').style.display = 'block';
+        document.getElementById('supplierDiv').style.display = 'none';
+    } else {
+        document.getElementById('customerDiv').style.display = 'none';
+        document.getElementById('supplierDiv').style.display = 'block';
+    }
+}
+document.addEventListener('DOMContentLoaded', togglePartyFields);
+</script>
+{% endblock %}

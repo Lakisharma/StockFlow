@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Printable Barcode & QR Label Sheet | StockFlow AI{% endblock %}
+
+{% block content %}
+<style>
+@media print {
+    .navbar, .sidebar, .page-header, .label-control-bar { display: none !important; }
+    .main-panel { margin: 0 !important; padding: 0 !important; }
+    .side-card { border: none !important; box-shadow: none !important; }
+    body { background-color: #fff !important; }
+}
+</style>
+
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header label-control-bar" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Barcode & QR Label Sheet Generator</h1>
+            <div class="page-subtitle">Generate printable multi-column barcode and QR label sheets for physical inventory tagging</div>
+        </div>
+        <div class="page-actions">
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 20px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">print</span>
+                <span>Print Label Sheet</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Control Filter Bar -->
+    <div class="side-card label-control-bar" style="padding: 18px;">
+        <form method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; align-items: center;">
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Product</label>
+                <select name="product_id" class="input-control" onchange="this.form.submit()">
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {% if selected_product.id == p.id %}selected{% endif %}>{{ p.name }} (SKU: {{ p.sku }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Label Size Preset</label>
+                <select name="size" class="input-control" onchange="this.form.submit()">
+                    <option value="small" {% if preset_size == 'small' %}selected{% endif %}>Small (25x15 mm)</option>
+                    <option value="medium" {% if preset_size == 'medium' %}selected{% endif %}>Medium (50x30 mm)</option>
+                    <option value="large" {% if preset_size == 'large' %}selected{% endif %}>Large (70x40 mm)</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">Sheet Copies Count</label>
+                <input type="number" name="quantity" class="input-control" value="{{ quantity }}" min="1" max="100" onchange="this.form.submit()">
+            </div>
+
+            <div>
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; margin-top: 18px; width: 100%;">Update Sheet</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Printable Label Sheet Grid -->
+    <div class="side-card" style="padding: 24px;">
+        <h3 class="label-control-bar" style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px;">Print Sheet Preview</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax({% if preset_size == 'small' %}160px{% elif preset_size == 'large' %}260px{% else %}210px{% endif %}, 1fr)); gap: 15px; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+            {% for i in quantity_range %}
+            <div style="border: 1px dashed #9ca3af; padding: 10px; border-radius: 4px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff;">
+                <div style="font-weight: 800; font-size: 0.85rem; color: #000; margin-bottom: 2px;">{{ selected_product.name }}</div>
+                <div style="font-size: 0.72rem; color: #4b5563; font-family: monospace;">SKU: {{ selected_product.sku }}</div>
+
+                <div style="margin: 6px 0; width: 100%;">
+                    {{ barcode_svg|safe }}
+                </div>
+
+                <div style="font-size: 0.75rem; font-weight: 700; color: #000; display: flex; justify-content: space-between; width: 100%;">
+                    <span>Price: ₹{{ selected_product.selling_price|default:'0.00' }}</span>
+                    <span>Unit: {{ selected_product.unit.name|default:'PCS' }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

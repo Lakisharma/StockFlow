@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock Movement History | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="stock-history-content" style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Stock Movement History</h1>
+            <div class="page-subtitle">Complete audit trail of all inventory transactions and stock movements</div>
+        </div>
+        <a href="{% url 'inventory-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round">arrow_back</span>
+            <span>Back to Inventory</span>
+        </a>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <div class="side-card" style="padding: 20px;">
+        <form method="GET" action="{% url 'stock-history' %}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Search Query</label>
+                <input type="text" name="q" class="input-control" placeholder="Product, Ref #, Reason..." value="{{ search_query }}">
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Warehouse</label>
+                <select name="warehouse" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Warehouses</option>
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if selected_warehouse == wh.id|stringformat:"i" %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Transaction Type</label>
+                <select name="transaction_type" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    {% for key, label in transaction_types %}
+                        <option value="{{ key }}" {% if selected_type == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; flex: 1;">Filter Logs</button>
+                <a href="{% url 'stock-history' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; justify-content: center;" title="Reset Filters">
+                    <span class="material-icons-round">refresh</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Product Details</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Type</th>
+                        <th style="text-align: center;">Quantity</th>
+                        <th style="text-align: center;">Prev Balance</th>
+                        <th style="text-align: center;">New Balance</th>
+                        <th>Reference #</th>
+                        <th>User</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movements %}
+                    <tr>
+                        <td style="font-size: 0.82rem;">{{ m.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'inventory-detail' m.product.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">
+                                {{ m.product.name }}
+                            </a>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: <code>{{ m.product.sku }}</code></div>
+                        </td>
+                        <td>{{ m.warehouse.name }}</td>
+                        <td style="text-align: center;">
+                            {% if m.quantity > 0 %}
+                                <span class="badge badge-success">{{ m.get_transaction_type_display }}</span>
+                            {% else %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">{{ m.get_transaction_type_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center; font-weight: 700;">
+                            {% if m.quantity > 0 %}
+                                <span style="color: var(--success-color);">+{{ m.quantity }}</span>
+                            {% else %}
+                                <span style="color: var(--danger-color);">{{ m.quantity }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center; color: var(--text-muted);">{{ m.previous_stock }}</td>
+                        <td style="text-align: center; font-weight: 700; color: var(--text-main);">{{ m.new_stock }}</td>
+                        <td><code>{{ m.reference_number|default:"-" }}</code></td>
+                        <td style="font-size: 0.82rem;">{{ m.user.username|default:"System" }}</td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'stock-transaction-detail' m.id %}" class="nav-action-btn" title="View Transaction Detail">
+                                <span class="material-icons-round" style="font-size: 18px;">receipt</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 10px;">history</span>
+                            No stock movement log entries found matching your query.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Page <strong>{{ page_obj.number }}</strong> of <strong>{{ paginator.num_pages }}</strong>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&warehouse={{ selected_warehouse }}&transaction_type={{ selected_type }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Previous</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&warehouse={{ selected_warehouse }}&transaction_type={{ selected_type }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

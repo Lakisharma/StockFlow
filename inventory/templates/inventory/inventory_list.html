@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Multi-Warehouse Inventory Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="inventory-list-content" style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Inventory Management</h1>
+            <div class="page-subtitle">Track multi-warehouse stock levels, valuations, and movement history</div>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'stock-in' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; background-color: var(--success-color);">
+                <span class="material-icons-round">add_circle</span>
+                <span>Stock In</span>
+            </a>
+            <a href="{% url 'stock-out' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; background-color: var(--warning-color);">
+                <span class="material-icons-round" style="color: #ffffff;">remove_circle</span>
+                <span style="color: #ffffff;">Stock Out</span>
+            </a>
+            <a href="{% url 'stock-adjustment' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">tune</span>
+                <span>Adjust Stock</span>
+            </a>
+            <a href="{% url 'inventory-export-csv' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">download</span>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Inventory Top Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div class="metric-card">
+            <div class="metric-label">Total Active Products</div>
+            <div class="metric-value">{{ summary.total_products }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--primary-color);">
+            <div class="metric-label">Total Stock Quantity</div>
+            <div class="metric-value" style="color: var(--primary-color);">{{ summary.total_stock_qty }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--success-color);">
+            <div class="metric-label">Total Inventory Value</div>
+            <div class="metric-value" style="color: var(--success-color);">${{ summary.total_inventory_value|floatformat:2 }}</div>
+        </div>
+        <a href="{% url 'low-stock-list' %}" style="text-decoration: none;">
+            <div class="metric-card" style="border-left-color: var(--warning-color);">
+                <div class="metric-label">Low Stock Items</div>
+                <div class="metric-value" style="color: var(--warning-color);">{{ summary.low_stock_count }}</div>
+            </div>
+        </a>
+        <a href="{% url 'out-of-stock-list' %}" style="text-decoration: none;">
+            <div class="metric-card" style="border-left-color: var(--danger-color);">
+                <div class="metric-label">Out of Stock Items</div>
+                <div class="metric-value" style="color: var(--danger-color);">{{ summary.out_of_stock_count }}</div>
+            </div>
+        </a>
+        <div class="metric-card" style="border-left-color: var(--text-main);">
+            <div class="metric-label">Active Warehouses</div>
+            <div class="metric-value">{{ summary.warehouses_count }}</div>
+        </div>
+    </div>
+
+    <!-- Filters & Search Bar Card -->
+    <div class="side-card" style="padding: 20px;">
+        <form method="GET" action="{% url 'inventory-list' %}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Search</label>
+                <div style="position: relative;">
+                    <input type="text" name="q" class="input-control" placeholder="Product, SKU, Barcode..." value="{{ search_query }}">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Warehouse Filter</label>
+                <select name="warehouse" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Warehouses</option>
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if selected_warehouse == wh.id|stringformat:"i" %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Category</label>
+                <select name="category" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.78rem;">Stock Status</label>
+                <select name="status" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Stock Statuses</option>
+                    <option value="in_stock" {% if selected_status == 'in_stock' %}selected{% endif %}>In Stock</option>
+                    <option value="low_stock" {% if selected_status == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                    <option value="out_of_stock" {% if selected_status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                    <option value="over_stock" {% if selected_status == 'over_stock' %}selected{% endif %}>Over Stock</option>
+                    <option value="negative_stock" {% if selected_status == 'negative_stock' %}selected{% endif %}>Negative Stock</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; flex: 1;">Filter</button>
+                <a href="{% url 'inventory-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; justify-content: center;" title="Reset Filters">
+                    <span class="material-icons-round">refresh</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Inventory Data Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Image</th>
+                        <th>Product Details</th>
+                        <th>Category / Brand</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Current Stock</th>
+                        <th style="text-align: center;">Min / Max</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: right;">Valuation</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in inventory_items %}
+                    <tr>
+                        <td>
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover;">
+                            {% else %}
+                                <div style="width: 40px; height: 40px; border-radius: 6px; background-color: var(--bg-sidebar); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                    <span class="material-icons-round" style="font-size: 20px;">inventory_2</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'inventory-detail' item.product.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">
+                                {{ item.product.name }}
+                            </a>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 8px; margin-top: 2px;">
+                                <span>SKU: <code>{{ item.product.sku }}</code></span>
+                                {% if item.product.barcode %}
+                                    <span>Barcode: <code>{{ item.product.barcode }}</code></span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">{{ item.product.category.name }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ item.product.brand.name|default:"No Brand" }}</div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">{{ item.warehouse.name }}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">Code: <code>{{ item.warehouse.code }}</code></div>
+                        </td>
+                        <td style="text-align: center;">
+                            <span style="font-size: 1rem; font-weight: 700; color: var(--text-main);">{{ item.quantity }}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">{{ item.product.unit.short_name }}</span>
+                        </td>
+                        <td style="text-align: center; font-size: 0.82rem; color: var(--text-muted);">
+                            <span>Min: <strong>{{ item.min_stock_level }}</strong></span> | 
+                            <span>Max: <strong>{{ item.max_stock_level }}</strong></span>
+                        </td>
+                        <td style="text-align: center;">
+                            {% if item.stock_status == 'In Stock' %}
+                                <span class="badge badge-success">In Stock</span>
+                            {% elif item.stock_status == 'Low Stock' %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Low Stock</span>
+                            {% elif item.stock_status == 'Out of Stock' %}
+                                <span class="badge badge-danger">Out of Stock</span>
+                            {% elif item.stock_status == 'Over Stock' %}
+                                <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">Over Stock</span>
+                            {% else %}
+                                <span class="badge badge-danger" style="background-color: var(--danger-light); color: var(--danger-color);">Negative Stock</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right; font-weight: 700; color: var(--text-main);">
+                            ${{ item.inventory_value|floatformat:2 }}
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; gap: 6px; justify-content: center;">
+                                <a href="{% url 'inventory-detail' item.product.id %}" class="nav-action-btn" title="View Details">
+                                    <span class="material-icons-round" style="font-size: 18px;">visibility</span>
+                                </a>
+                                <a href="{% url 'stock-in' %}?product={{ item.product.id }}&warehouse={{ item.warehouse.id }}" class="nav-action-btn" title="Stock In" style="color: var(--success-color);">
+                                    <span class="material-icons-round" style="font-size: 18px;">add_circle_outline</span>
+                                </a>
+                                <a href="{% url 'stock-out' %}?product={{ item.product.id }}&warehouse={{ item.warehouse.id }}" class="nav-action-btn" title="Stock Out" style="color: var(--warning-color);">
+                                    <span class="material-icons-round" style="font-size: 18px;">remove_circle_outline</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 10px;">inventory_2</span>
+                            No inventory items found matching your filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Page <strong>{{ page_obj.number }}</strong> of <strong>{{ paginator.num_pages }}</strong>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&warehouse={{ selected_warehouse }}&category={{ selected_category }}&status={{ selected_status }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Previous</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&warehouse={{ selected_warehouse }}&category={{ selected_category }}&status={{ selected_status }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem;">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ employee.full_name }} | Employee Profile{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'employee-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Directory</a>
+            </div>
+            <h1 class="page-title">{{ employee.full_name }}</h1>
+            <div class="page-subtitle">Code: {{ employee.employee_code }} | Department: {{ employee.department.name|default:'Unassigned' }}</div>
+        </div>
+    </div>
+
+    <!-- Info Grid Card -->
+    <div class="side-card" style="padding: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">PHONE</div>
+                <div style="font-weight: 800; color: var(--text-main); margin-top: 4px;">{{ employee.phone }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">EMAIL</div>
+                <div style="font-weight: 800; color: var(--text-main); margin-top: 4px;">{{ employee.email|default:'N/A' }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">JOINING DATE</div>
+                <div style="font-weight: 800; color: var(--text-main); margin-top: 4px;">{{ employee.joining_date|date:"d M Y" }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">PRIMARY WAREHOUSE</div>
+                <div style="font-weight: 800; color: var(--primary-color); margin-top: 4px;">{{ employee.primary_warehouse.name|default:'General' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance History Card -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 16px;">Recent Attendance Records</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Working Hours</th>
+                    <th>Late (Mins)</th>
+                    <th>Overtime (Hrs)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in attendances %}
+                <tr>
+                    <td style="font-weight: 700;">{{ a.date|date:"d M Y" }}</td>
+                    <td>{{ a.check_in|time:"H:i"|default:'-' }}</td>
+                    <td>{{ a.check_out|time:"H:i"|default:'-' }}</td>
+                    <td style="font-weight: 800;">{{ a.working_hours }} hrs</td>
+                    <td style="color: {% if a.late_minutes > 0 %}#dc2626{% else %}var(--text-muted){% endif %};">{{ a.late_minutes }}</td>
+                    <td style="color: #16a34a;">{{ a.overtime_hours }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if a.status == 'present' or a.status == 'late' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                            {{ a.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        No attendance history available.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

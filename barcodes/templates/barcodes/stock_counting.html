@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock Counting Mode | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Physical Stock Counting Mode</h1>
+            <div class="page-subtitle">Fast barcode inventory counting, physical vs system stock reconciliation</div>
+        </div>
+    </div>
+
+    <!-- Warehouse Selector -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: flex; gap: 12px; align-items: center;">
+            <label style="font-weight: 700; font-size: 0.85rem;">Target Warehouse:</label>
+            <select name="warehouse" onchange="this.form.submit()" class="input-control" style="max-width: 300px;">
+                {% for w in warehouses %}
+                <option value="{{ w.id }}" {% if selected_warehouse and selected_warehouse.id == w.id %}selected{% endif %}>{{ w.name }} ({{ w.code }})</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- Inventory Reconciliation Table -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>SKU</th>
+                    <th>System Quantity</th>
+                    <th>Physical Counted</th>
+                    <th>Variance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in stocks %}
+                <tr>
+                    <td style="font-weight: 700; color: var(--text-main);">{{ s.product.name }}</td>
+                    <td style="font-family: monospace;">{{ s.product.sku }}</td>
+                    <td style="font-weight: 800; color: var(--primary-color);">{{ s.quantity }}</td>
+                    <td style="font-weight: 800;">
+                        <input type="number" value="{{ s.quantity }}" class="input-control" style="width: 90px; padding: 4px 8px; text-align: center; font-weight: 800;">
+                    </td>
+                    <td style="font-weight: 800; color: #16a34a;">0</td>
+                    <td>
+                        <button type="button" class="page-actions-btn" style="padding: 4px 12px; font-size: 0.78rem;">Confirm Count</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No stock records available for counting.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

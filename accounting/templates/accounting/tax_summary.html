@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tax & GST Summary | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">GST & Tax Summary Statement</h1>
+            <div class="page-subtitle">Output GST collected on sales vs Input GST paid on purchases</div>
+        </div>
+    </div>
+
+    <!-- Tax Summary Table -->
+    <div class="side-card" style="padding: 24px; max-width: 850px;">
+        <table class="data-table">
+            <thead>
+                <tr style="background: var(--bg-hover);">
+                    <th>Tax Category</th>
+                    <th style="text-align: right;">Output Tax (Sales Invoices)</th>
+                    <th style="text-align: right;">Input Tax (Purchase Bills)</th>
+                    <th style="text-align: right;">Net Liability / (Credit)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 700;">CGST (Central GST)</td>
+                    <td style="text-align: right;">₹{{ tax.cgst_output|floatformat:2 }}</td>
+                    <td style="text-align: right; color: #16a34a;">₹{{ tax.cgst_input|floatformat:2 }}</td>
+                    <td style="text-align: right; font-weight: 700;">-</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700;">SGST (State GST)</td>
+                    <td style="text-align: right;">₹{{ tax.sgst_output|floatformat:2 }}</td>
+                    <td style="text-align: right; color: #16a34a;">₹{{ tax.sgst_input|floatformat:2 }}</td>
+                    <td style="text-align: right; font-weight: 700;">-</td>
+                </tr>
+                <tr style="font-weight: 800; font-size: 1.1rem; background: var(--bg-hover);">
+                    <td>TOTAL GST SUMMARY</td>
+                    <td style="text-align: right; color: #2563eb;">₹{{ tax.output_tax|floatformat:2 }}</td>
+                    <td style="text-align: right; color: #16a34a;">₹{{ tax.input_tax|floatformat:2 }}</td>
+                    <td style="text-align: right; color: {% if tax.net_tax_liability >= 0 %}#dc2626{% else %}#16a34a{% endif %};">₹{{ tax.net_tax_liability|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

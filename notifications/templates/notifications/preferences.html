@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alert Preferences | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'notification-center' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Notification Center</a>
+            </div>
+            <h1 class="page-title">Notification Alert Preferences</h1>
+            <div class="page-subtitle">Configure which notification event categories trigger in-app alerts for your account</div>
+        </div>
+    </div>
+
+    <!-- Preferences Form Card -->
+    <div class="side-card" style="padding: 30px; max-width: 700px;">
+        <form method="POST">
+            {% csrf_token %}
+
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                Inventory & Stock Conditions
+            </h3>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" name="notify_low_stock" {% if pref.notify_low_stock %}checked{% endif %}>
+                    <span>Low Stock Alerts (Stock &le; Min Stock Threshold)</span>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" name="notify_out_of_stock" {% if pref.notify_out_of_stock %}checked{% endif %}>
+                    <span>Out of Stock Critical Alerts (Stock = 0)</span>
+                </label>
+            </div>
+
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                Operations & Transactions
+            </h3>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" name="notify_purchases" {% if pref.notify_purchases %}checked{% endif %}>
+                    <span>Purchase Order & Invoice Alerts</span>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" name="notify_transfers" {% if pref.notify_transfers %}checked{% endif %}>
+                    <span>Stock Transfer Movement Alerts</span>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" name="notify_ocr" {% if pref.notify_ocr %}checked{% endif %}>
+                    <span>AI OCR Bill Scanner Processing Alerts</span>
+                </label>
+            </div>
+
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                System & Security
+            </h3>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" name="notify_backups" {% if pref.notify_backups %}checked{% endif %}>
+                    <span>Backup & System Restore Alerts</span>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                    <input type="checkbox" name="notify_security" {% if pref.notify_security %}checked{% endif %}>
+                    <span>Security & Authentication Events (Login, Password Change)</span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Save Alert Preferences</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Customer Receivables | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Customer Receivables</h1>
+            <div class="page-subtitle">Track outstanding customer invoices, due dates, and collection actions</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'aging-report' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Receivables Aging Report</a>
+            <a href="{% url 'customer-ledger' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Customer Statements</a>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: flex; gap: 12px;">
+            <input type="text" name="search" class="input-control" placeholder="Search invoice number or customer name..." value="{{ search|default:'' }}">
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Search</button>
+            <a href="{% url 'receivables-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Reset</a>
+        </form>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Invoice Number</th>
+                    <th>Customer Name</th>
+                    <th>Invoice Date</th>
+                    <th>Invoice Amount</th>
+                    <th>Paid Amount</th>
+                    <th>Outstanding</th>
+                    <th>Days Overdue</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in receivables %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ r.invoice.invoice_number }}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">{{ r.invoice.customer.name }}</td>
+                    <td>{{ r.invoice.invoice_date|date:"d M Y" }}</td>
+                    <td>₹{{ r.invoice.grand_total|floatformat:2 }}</td>
+                    <td style="color: #16a34a; font-weight: 700;">₹{{ r.invoice.paid_amount|floatformat:2 }}</td>
+                    <td style="font-weight: 800; color: #dc2626;">₹{{ r.outstanding|floatformat:2 }}</td>
+                    <td>
+                        {% if r.days_overdue > 0 %}
+                        <span class="badge" style="background-color: rgba(220, 38, 38, 0.15); color: #dc2626; padding: 3px 8px;">{{ r.days_overdue }} Days</span>
+                        {% else %}
+                        <span class="badge" style="background-color: rgba(34, 197, 94, 0.15); color: #16a34a; padding: 3px 8px;">Current</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'payment-create' %}?invoice={{ r.invoice.id }}" class="page-actions-btn" style="text-decoration: none; padding: 4px 8px; font-size: 0.78rem;">Receive Payment</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No outstanding customer receivables found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

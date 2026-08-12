@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Control Center | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title" style="display: flex; align-items: center; gap: 10px;">
+                <span class="material-icons-round" style="color: var(--primary-color); font-size: 2.2rem;">admin_panel_settings</span>
+                <span>System Admin Control Center</span>
+            </h1>
+            <div class="page-subtitle">Centralized system administration, security controls, document sequences, and diagnostic health</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'admin-security' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">security</span>
+                <span>Security Policy</span>
+            </a>
+            <a href="{% url 'admin-health' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">health_and_safety</span>
+                <span>System Health</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #2563eb;">ACTIVE SYSTEM USERS</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #2563eb; margin-top: 4px;">{{ metrics.active_users_count }} / {{ metrics.total_users_count }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Active user accounts</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #d97706;">FAILED LOGINS TODAY</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #d97706; margin-top: 4px;">{{ metrics.failed_logins_today }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Tracked failed login attempts</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #dc2626;">LOCKED USER ACCOUNTS</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #dc2626; margin-top: 4px;">{{ metrics.locked_users_count }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Requires admin unlock</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #16a34a;">SYSTEM STATUS</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #16a34a; margin-top: 4px;">ONLINE (v2.5)</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">All services operational</div>
+        </div>
+    </div>
+
+    <!-- System Diagnostic Summary Card -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 14px;">System Component Health</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+            {% for key, item in health.items %}
+            <div style="padding: 14px; background: var(--bg-hover); border-radius: 8px; border-left: 4px solid {% if item.status == 'healthy' %}#16a34a{% else %}#d97706{% endif %};">
+                <div style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted);">{{ key }}</div>
+                <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main); margin-top: 4px;">{{ item.message }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Admin Audit Logs -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 14px;">Recent System Audit Trail</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Module</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">{{ log.timestamp|date:"d M H:i:s" }}</td>
+                    <td style="font-weight: 700;">{{ log.user.username|default:'System' }}</td>
+                    <td><span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary-color); padding: 3px 8px;">{{ log.user_role }}</span></td>
+                    <td style="font-weight: 800;">{{ log.action }}</td>
+                    <td>{{ log.module }}</td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">{{ log.description }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        No audit logs available.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

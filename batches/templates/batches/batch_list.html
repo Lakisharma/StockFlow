@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Batch & Expiry Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Batch & Expiry Management</h1>
+            <div class="page-subtitle">Track manufacturing batches, FEFO (First Expiry, First Out) dispatching, and warehouse stock allocation</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'expiring-soon-report' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">notification_important</span>
+                <span>Expiring Soon Report</span>
+            </a>
+            <a href="{% url 'expired-stock-report' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; color: #dc2626; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">running_with_errors</span>
+                <span>Expired Stock</span>
+            </a>
+            <a href="{% url 'serial-list' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">qr_code_2</span>
+                <span>Serial Numbers</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <div class="side-card" style="padding: 16px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">TOTAL BATCHES</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">{{ total_batches }}</div>
+        </div>
+        <div class="side-card" style="padding: 16px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">ACTIVE BATCH STOCK</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary-color); margin-top: 4px;">{{ total_active_stock }}</div>
+        </div>
+        <div class="side-card" style="padding: 16px;">
+            <div style="font-size: 0.8rem; color: #d97706; font-weight: 700;">EXPIRING SOON (&le; 30 DAYS)</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #d97706; margin-top: 4px;">{{ expiring_soon_count }}</div>
+        </div>
+        <div class="side-card" style="padding: 16px;">
+            <div style="font-size: 0.8rem; color: #dc2626; font-weight: 700;">EXPIRED BATCHES</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #dc2626; margin-top: 4px;">{{ expired_count }}</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar & Create Form Panel -->
+    <div class="side-card" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Filter & Search Batches</h3>
+            <button onclick="document.getElementById('addBatchModal').style.display='flex'" class="page-actions-btn" style="padding: 8px 16px; font-size: 0.85rem;">+ Register New Batch</button>
+        </div>
+
+        <form method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px;">
+            <input type="text" name="search" class="input-control" placeholder="Search by batch number, product name, SKU..." value="{{ search|default:'' }}">
+
+            <select name="warehouse" class="input-control" onchange="this.form.submit()">
+                <option value="">All Warehouses</option>
+                {% for w in warehouses %}
+                <option value="{{ w.id }}" {% if warehouse_filter == w.id|stringformat:"s" %}selected{% endif %}>{{ w.name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="status" class="input-control" onchange="this.form.submit()">
+                <option value="">All Expiry Statuses</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Stock</option>
+                <option value="expiring_soon" {% if status_filter == 'expiring_soon' %}selected{% endif %}>Expiring Soon</option>
+                <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expired</option>
+            </select>
+
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="page-actions-btn" style="padding: 8px 16px;">Filter</button>
+                <a href="{% url 'batch-list' %}" class="btn-demo" style="text-decoration: none; padding: 8px 12px;">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Batch Table Card -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Batch Number</th>
+                    <th>Product</th>
+                    <th>Warehouse</th>
+                    <th>Available Qty</th>
+                    <th>Mfg Date</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Inventory Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in batches %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ b.batch_number }}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">
+                        {{ b.product.name }}
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">SKU: {{ b.product.sku }}</div>
+                    </td>
+                    <td>{{ b.warehouse.name }}</td>
+                    <td style="font-weight: 800; font-size: 0.95rem;">{{ b.available_quantity }}</td>
+                    <td style="color: var(--text-muted); font-size: 0.85rem;">{{ b.mfg_date|date:"d M Y"|default:"N/A" }}</td>
+                    <td style="font-weight: 700; font-size: 0.85rem;">{{ b.expiry_date|date:"d M Y"|default:"N/A" }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if b.expiry_status == 'Expired' %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% elif b.expiry_status == 'Expiring Soon' %}background-color: rgba(245, 158, 11, 0.15); color: #d97706;{% else %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% endif %}">
+                            {{ b.expiry_status }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 700;">₹{{ b.inventory_value|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No product manufacturing batches found matching your filter criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Register New Batch -->
+<div id="addBatchModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000;">
+    <div class="side-card" style="width: 500px; padding: 24px; max-width: 90%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">Register Product Batch</h3>
+            <button onclick="document.getElementById('addBatchModal').style.display='none'" class="btn-demo" style="padding: 4px 8px;">&times;</button>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Select Product</label>
+                <select name="product" class="input-control" required>
+                    {% for p in products %}
+                    <option value="{{ p.id }}">{{ p.name }} (SKU: {{ p.sku }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Target Warehouse</label>
+                <select name="warehouse" class="input-control" required>
+                    {% for w in warehouses %}
+                    <option value="{{ w.id }}">{{ w.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Batch Number (Auto or Custom)</label>
+                <input type="text" name="batch_number" class="input-control" value="{{ auto_batch_number }}" required style="font-family: monospace;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Initial Quantity</label>
+                <input type="number" name="quantity" class="input-control" value="100" min="1" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Mfg Date</label>
+                    <input type="date" name="mfg_date" class="input-control">
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Expiry Date</label>
+                    <input type="date" name="expiry_date" class="input-control">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="document.getElementById('addBatchModal').style.display='none'" class="btn-demo" style="padding: 10px 18px;">Cancel</button>
+                <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Save Batch</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

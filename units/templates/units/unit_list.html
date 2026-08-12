@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Unit Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="unit-list-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Unit Management</h1>
+            <div class="page-subtitle">Track and configure product units of measure</div>
+        </div>
+        <a href="{% url 'unit-add' %}" class="page-actions-btn" style="text-decoration: none;">
+            <span class="material-icons-round">add</span>
+            <span>Add Unit</span>
+        </a>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="side-card" style="margin-bottom: 25px; padding: 20px;">
+        <form method="GET" class="row g-3 align-items-center" id="filterForm" style="display: flex; flex-wrap: wrap; gap: 15px; width: 100%;">
+            <!-- Search -->
+            <div class="nav-search-bar" style="width: 300px; max-width: 100%;">
+                <span class="material-icons-round nav-search-icon">search</span>
+                <input class="nav-search-input" type="text" name="q" value="{{ q }}" placeholder="Search by name or short name...">
+            </div>
+
+            <!-- Status Filter -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);" for="statusFilter">Status:</label>
+                <select name="status" id="statusFilter" class="input-control" style="width: 150px; padding: 8px 12px;" onchange="this.form.submit()">
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>All Statuses</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+
+            <!-- Sorting -->
+            <div style="display: flex; align-items: center; gap: 8px; margin-right: auto;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);" for="sortSelect">Sort By:</label>
+                <select name="sort" id="sortSelect" class="input-control" style="width: 160px; padding: 8px 12px;" onchange="this.form.submit()">
+                    <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest Created</option>
+                    <option value="created_at" {% if sort == 'created_at' %}selected{% endif %}>Oldest Created</option>
+                    <option value="name" {% if sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                    <option value="-name" {% if sort == '-name' %}selected{% endif %}>Name (Z-A)</option>
+                    <option value="short_name" {% if sort == 'short_name' %}selected{% endif %}>Short Name (A-Z)</option>
+                    <option value="-short_name" {% if sort == '-short_name' %}selected{% endif %}>Short Name (Z-A)</option>
+                </select>
+            </div>
+
+            <!-- Export & Refresh Buttons -->
+            <div style="display: flex; gap: 10px;">
+                <a href="{% url 'unit-list' %}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-icons-round" style="font-size: 18px;">refresh</span>
+                    <span>Refresh</span>
+                </a>
+                <a href="?q={{ q }}&status={{ status }}&sort={{ sort }}&export=csv" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-icons-round" style="font-size: 18px;">download</span>
+                    <span>CSV</span>
+                </a>
+                <a href="?q={{ q }}&status={{ status }}&sort={{ sort }}&export=excel" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-icons-round" style="font-size: 18px;">grid_on</span>
+                    <span>Excel</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Action Info Bar -->
+    <div id="bulkActionBar" class="alert-item alert-warning" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round alert-item-icon">check_box</span>
+            <span class="alert-message" id="bulkActionCountText">0 units selected</span>
+        </div>
+        <form method="POST" action="{% url 'unit-bulk-delete' %}" id="bulkDeleteForm" onsubmit="return confirm('Are you sure you want to delete all selected units?');">
+            {% csrf_token %}
+            <div id="bulkDeleteIdsContainer"></div>
+            <button type="submit" class="page-actions-btn" style="background-color: var(--danger-color); padding: 6px 12px; font-size: 0.82rem;">
+                <span class="material-icons-round" style="font-size: 16px;">delete_sweep</span>
+                <span>Delete Selected</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="custom-table" id="unitTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" id="selectAllCheckbox" style="cursor: pointer; width: 16px; height: 16px;">
+                        </th>
+                        <th>Unit Name</th>
+                        <th>Short Name</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for unit in units %}
+                    <tr>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <input type="checkbox" class="unit-row-checkbox" value="{{ unit.id }}" style="cursor: pointer; width: 15px; height: 15px;">
+                        </td>
+                        <td style="vertical-align: middle;">
+                            <a href="{% url 'unit-detail' unit.id %}" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">
+                                {{ unit.name }}
+                            </a>
+                        </td>
+                        <td style="vertical-align: middle;"><code>{{ unit.short_name }}</code></td>
+                        <td style="vertical-align: middle; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ unit.description|default:"-" }}
+                        </td>
+                        <td style="vertical-align: middle;">
+                            {% if unit.status == 'active' %}
+                                <span class="badge badge-success">
+                                    <span class="badge-dot"></span>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="badge badge-danger">
+                                    <span class="badge-dot"></span>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="vertical-align: middle; font-size: 0.8rem; color: var(--text-muted);">
+                            {{ unit.created_at|date:"M d, Y" }}
+                        </td>
+                        <td style="vertical-align: middle; font-size: 0.8rem; color: var(--text-muted);">
+                            {{ unit.updated_at|date:"M d, Y" }}
+                        </td>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; gap: 8px;">
+                                <a href="{% url 'unit-detail' unit.id %}" class="nav-action-btn" title="View details" style="width: 32px; height: 32px;">
+                                    <span class="material-icons-round" style="font-size: 18px;">visibility</span>
+                                </a>
+                                <a href="{% url 'unit-edit' unit.id %}" class="nav-action-btn" title="Edit unit" style="width: 32px; height: 32px; color: var(--warning-color);">
+                                    <span class="material-icons-round" style="font-size: 18px;">edit</span>
+                                </a>
+                                <a href="{% url 'unit-delete' unit.id %}" class="nav-action-btn" title="Delete unit" style="width: 32px; height: 32px; color: var(--danger-color);">
+                                    <span class="material-icons-round" style="font-size: 18px;">delete</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; margin-bottom: 10px; display: block;">square_foot</span>
+                            No units found matching your search.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Section -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; flex-wrap: wrap; gap: 15px;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status }}&sort={{ sort }}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                        <span class="material-icons-round" style="font-size: 18px;">chevron_left</span>
+                        <span>Previous</span>
+                    </a>
+                {% endif %}
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status }}&sort={{ sort }}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                        <span>Next</span>
+                        <span class="material-icons-round" style="font-size: 18px;">chevron_right</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const rowCheckboxes = document.querySelectorAll('.unit-row-checkbox');
+        const bulkActionBar = document.getElementById('bulkActionBar');
+        const bulkActionCountText = document.getElementById('bulkActionCountText');
+        const bulkDeleteIdsContainer = document.getElementById('bulkDeleteIdsContainer');
+
+        function updateBulkBar() {
+            const checkedBoxes = document.querySelectorAll('.unit-row-checkbox:checked');
+            const count = checkedBoxes.length;
+            
+            if (count > 0) {
+                bulkActionBar.style.display = 'flex';
+                bulkActionCountText.textContent = `${count} unit${count > 1 ? 's' : ''} selected`;
+                
+                bulkDeleteIdsContainer.innerHTML = '';
+                checkedBoxes.forEach(checkbox => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'ids';
+                    hiddenInput.value = checkbox.value;
+                    bulkDeleteIdsContainer.appendChild(hiddenInput);
+                });
+            } else {
+                bulkActionBar.style.display = 'none';
+                bulkDeleteIdsContainer.innerHTML = '';
+            }
+        }
+
+        selectAllCheckbox.addEventListener('change', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateBulkBar();
+        });
+
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (!this.checked) {
+                    selectAllCheckbox.checked = false;
+                } else {
+                    const allChecked = Array.from(rowCheckboxes).every(box => box.checked);
+                    selectAllCheckbox.checked = allChecked;
+                }
+                updateBulkBar();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Warehouse Utilization Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Warehouse Utilization & Inventory Report</h1>
+            <div class="page-subtitle">Product count, stock quantity, valuation, and shortages per godown location</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 16px;">Print</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Warehouse</th>
+                        <th>Code</th>
+                        <th style="text-align: center;">Total Products</th>
+                        <th style="text-align: center;">Total Stock Qty</th>
+                        <th style="text-align: right;">Inventory Valuation</th>
+                        <th style="text-align: center;">Low Stock</th>
+                        <th style="text-align: center;">Out of Stock</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in warehouse_data %}
+                    <tr>
+                        <td><strong>{{ item.warehouse.name }}</strong></td>
+                        <td><code>{{ item.warehouse.code }}</code></td>
+                        <td style="text-align: center;">{{ item.total_products }}</td>
+                        <td style="text-align: center; font-weight: 700;">{{ item.total_quantity }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--success-color);">₹ {{ item.inventory_value|floatformat:2 }}</td>
+                        <td style="text-align: center;">
+                            <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">{{ item.low_stock_count }}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="badge badge-danger">{{ item.out_of_stock_count }}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'warehouse-detail' item.warehouse.id %}" class="nav-action-btn" title="View Godown Details">
+                                <span class="material-icons-round" style="font-size: 18px;">visibility</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No warehouse records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

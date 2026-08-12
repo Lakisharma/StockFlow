@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete / Cancel Purchase | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="purchase-delete-content" style="max-width: 600px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <h1 class="page-title">Cancel Purchase</h1>
+            <div class="page-subtitle">Configure purchase removal or cancellation options</div>
+        </div>
+    </div>
+
+    <!-- Confirm Card -->
+    <div class="side-card" style="padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        <div class="icon-danger" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--danger-color); background-color: var(--danger-light);">
+            <span class="material-icons-round" style="font-size: 36px;">warning</span>
+        </div>
+
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Confirm Cancel or Delete</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 450px;">
+            Are you sure you want to cancel or delete Purchase Invoice <strong>"{{ object.invoice_number }}"</strong>?
+            <br><br>
+            {% if object.status == 'received' or object.status == 'completed' or object.payments.exists %}
+                <span style="color: var(--danger-color); font-weight: 600;">
+                    WARNING: This invoice has already affected warehouse stock levels or registered payments. Deleting it permanently is blocked. You must choose **Cancel (Safe)** to reverse stocks and flag payments as failed.
+                </span>
+            {% else %}
+                This is a draft invoice and has not affected stock levels. You can safely delete it permanently.
+            {% endif %}
+        </p>
+
+        <!-- Form Options -->
+        <form method="POST" style="width: 100%; display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 15px;">
+            {% csrf_token %}
+            
+            <div style="display: flex; gap: 15px; width: 100%; justify-content: center;">
+                <a href="{% url 'purchase-list' %}" class="btn-demo" style="text-decoration: none; padding: 12px 24px;">
+                    Cancel
+                </a>
+                
+                <!-- Safe Cancel -->
+                <button type="submit" name="deactivate_only" value="true" class="page-actions-btn" style="background-color: var(--warning-color); padding: 12px 24px;">
+                    <span class="material-icons-round" style="font-size: 18px; color: #ffffff;">block</span>
+                    <span style="color: #ffffff;">Cancel (Safe Reversal)</span>
+                </button>
+
+                <!-- Hard Delete Option -->
+                {% if object.status != 'received' and object.status != 'completed' and not object.payments.exists %}
+                <button type="submit" name="deactivate_only" value="false" class="page-actions-btn" style="background-color: var(--danger-color); padding: 12px 24px;" onclick="return confirm('Are you sure you want to PERMANENTLY delete this invoice?');">
+                    <span class="material-icons-round" style="font-size: 18px;">delete_forever</span>
+                    <span>Delete Permanently</span>
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Django Local Data & Media
+.env
+*.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# IDE & Editor Files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Backup Archives & Temporary Logs
+*.log
+*.tar.gz
+scratch/
+
+# Node.js & Desktop Dist
+node_modules/
+desktop/node_modules/
+desktop/dist/
+release/*.exe
+

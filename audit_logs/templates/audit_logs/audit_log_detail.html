@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Audit Inspector - {{ log.log_id }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'audit-log-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Audit Table</a>
+            </div>
+            <h1 class="page-title">Audit Inspector: {{ log.log_id }}</h1>
+            <div class="page-subtitle">{{ log.action }} on {{ log.module }} &bull; Timestamp {{ log.timestamp|date:"d F Y, H:i:s" }}</div>
+        </div>
+    </div>
+
+    <!-- Inspector Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Card 1: User & Security Information -->
+        <div class="side-card" style="padding: 25px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                User & Session Information
+            </h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.88rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">User Account:</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{% if log.user %}{{ log.user.username }} ({{ log.user.email }}){% else %}System Automated Task{% endif %}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Assigned Role:</span>
+                    <span style="font-weight: 700; color: var(--primary-color);">{{ log.user_role }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Client IP Address:</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{ log.ip_address|default:"N/A" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Device / User-Agent:</span>
+                    <span style="font-weight: 600; color: var(--text-main); max-width: 250px; text-align: right; font-size: 0.8rem;">{{ log.device_info|default:"N/A" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Record & Action Information -->
+        <div class="side-card" style="padding: 25px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                Action & Event Context
+            </h3>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.88rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Action Type:</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{ log.action }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Target Module:</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{ log.module }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Record Type & ID:</span>
+                    <span style="font-weight: 700; color: var(--text-main);">{{ log.record_type|default:"N/A" }} #{{ log.record_id|default:"N/A" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Status Result:</span>
+                    <span class="badge" style="padding: 2px 8px; font-size: 0.75rem; {% if log.status == 'success' %}background-color: rgba(16, 185, 129, 0.15); color: #059669;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                        {{ log.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description Card -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px;">Activity Description</h3>
+        <div style="font-size: 0.9rem; color: var(--text-main); background-color: var(--bg-body); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+            {{ log.description }}
+        </div>
+    </div>
+
+    <!-- Side-by-Side Before / After Data Diff Table -->
+    {% if log.changed_fields %}
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round" style="color: var(--primary-color);">compare_arrows</span>
+            <span>Before / After Data Modifications Diff</span>
+        </h3>
+
+        <div class="table-responsive">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">
+                        <th style="padding: 10px;">Field Name</th>
+                        <th style="padding: 10px; background-color: rgba(239, 68, 68, 0.05); color: #dc2626;">Previous Value (Before)</th>
+                        <th style="padding: 10px; background-color: rgba(16, 185, 129, 0.05); color: #059669;">New Value (After)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for field_name, diff_vals in log.changed_fields.items %}
+                    <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.88rem;">
+                        <td style="padding: 12px 10px; font-weight: 700; color: var(--text-main);">
+                            {{ field_name }}
+                        </td>
+                        <td style="padding: 12px 10px; background-color: rgba(239, 68, 68, 0.03); color: #dc2626; font-family: monospace;">
+                            {{ diff_vals.before|default:"(Empty / None)" }}
+                        </td>
+                        <td style="padding: 12px 10px; background-color: rgba(16, 185, 129, 0.03); color: #059669; font-weight: 700; font-family: monospace;">
+                            {{ diff_vals.after|default:"(Empty / None)" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

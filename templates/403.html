@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}403 Access Denied | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center min-vh-75 text-center py-5">
+    <div class="card bg-dark text-white border-0 shadow-lg p-5" style="max-width: 550px; background: rgba(18, 24, 38, 0.85); backdrop-filter: blur(16px); border-radius: 20px;">
+        <div class="display-1 fw-bold text-danger mb-3">403</div>
+        <h3 class="fw-bold mb-3">Access Denied / Unauthorized</h3>
+        <p class="text-secondary mb-4">You do not possess the required RBAC role permissions or warehouse scope authorization to access this operational feature.</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary px-4 py-2 rounded-pill">
+                <span class="material-icons-round align-middle me-1">dashboard</span> Go to Dashboard
+            </a>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary px-4 py-2 rounded-pill">Go Back</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

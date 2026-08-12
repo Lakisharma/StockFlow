@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Product Stock Breakdown: {{ product.name }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="inventory-detail-content" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">{{ product.name }}</h1>
+            <div class="page-subtitle">SKU: <code>{{ product.sku }}</code> | Barcode: <code>{{ product.barcode|default:"N/A" }}</code></div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'inventory-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Back to Inventory</span>
+            </a>
+            <a href="{% url 'stock-in' %}?product={{ product.id }}" class="page-actions-btn" style="text-decoration: none; background-color: var(--success-color); padding: 10px 16px;">
+                <span class="material-icons-round">add_circle</span>
+                <span>Stock In</span>
+            </a>
+            <a href="{% url 'stock-out' %}?product={{ product.id }}" class="page-actions-btn" style="text-decoration: none; background-color: var(--warning-color); padding: 10px 16px;">
+                <span class="material-icons-round" style="color: #ffffff;">remove_circle</span>
+                <span style="color: #ffffff;">Stock Out</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Product Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div class="metric-card">
+            <div class="metric-label">Total Stock Quantity</div>
+            <div class="metric-value">{{ total_stock }} <span style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">{{ product.unit.short_name }}</span></div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--success-color);">
+            <div class="metric-label">Total Inventory Value</div>
+            <div class="metric-value" style="color: var(--success-color);">${{ total_valuation|floatformat:2 }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--primary-color);">
+            <div class="metric-label">Purchase Price</div>
+            <div class="metric-value" style="color: var(--primary-color);">${{ product.purchase_price|floatformat:2 }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--warning-color);">
+            <div class="metric-label">Selling Price</div>
+            <div class="metric-value" style="color: var(--warning-color);">${{ product.selling_price|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <!-- Multi-Warehouse Stock Distribution Cards -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Warehouse-Wise Stock Distribution
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+            {% for stock in warehouse_stocks %}
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; background-color: var(--bg-main); display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0;">{{ stock.warehouse.name }}</h4>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Type: {{ stock.warehouse.get_warehouse_type_display }}</div>
+                    </div>
+                    {% if stock.stock_status == 'In Stock' %}
+                        <span class="badge badge-success">In Stock</span>
+                    {% elif stock.stock_status == 'Low Stock' %}
+                        <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Low Stock</span>
+                    {% elif stock.stock_status == 'Out of Stock' %}
+                        <span class="badge badge-danger">Out of Stock</span>
+                    {% else %}
+                        <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ stock.stock_status }}</span>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 5px;">
+                    <div style="font-size: 1.4rem; font-weight: 800; color: var(--primary-color);">
+                        {{ stock.quantity }} <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-muted);">{{ product.unit.short_name }}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">
+                        Valuation: ${{ stock.inventory_value|floatformat:2 }}
+                    </div>
+                </div>
+
+                <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; justify-content: space-between; border-top: 1px dashed var(--border-color); padding-top: 10px;">
+                    <span>Min Limit: <strong>{{ stock.min_stock_level }}</strong></span>
+                    <span>Max Limit: <strong>{{ stock.max_stock_level }}</strong></span>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <a href="{% url 'stock-in' %}?product={{ product.id }}&warehouse={{ stock.warehouse.id }}" class="page-actions-btn" style="flex: 1; text-align: center; text-decoration: none; padding: 6px 10px; font-size: 0.8rem; background-color: var(--success-color);">
+                        + Stock In
+                    </a>
+                    <a href="{% url 'stock-out' %}?product={{ product.id }}&warehouse={{ stock.warehouse.id }}" class="page-actions-btn" style="flex: 1; text-align: center; text-decoration: none; padding: 6px 10px; font-size: 0.8rem; background-color: var(--warning-color);">
+                        - Stock Out
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text-muted);">
+                No warehouse stock records initialized for this product.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Product Stock Movement Audit Table -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Stock Movement History Log
+        </h3>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Transaction Type</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Quantity Change</th>
+                        <th style="text-align: center;">Prev Balance</th>
+                        <th style="text-align: center;">New Balance</th>
+                        <th>Reference #</th>
+                        <th>User</th>
+                        <th>Reason / Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movements %}
+                    <tr>
+                        <td style="font-size: 0.82rem;">{{ m.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main); font-weight: 600;">
+                                {{ m.get_transaction_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ m.warehouse.name }}</td>
+                        <td style="text-align: center; font-weight: 700;">
+                            {% if m.quantity > 0 %}
+                                <span style="color: var(--success-color);">+{{ m.quantity }}</span>
+                            {% else %}
+                                <span style="color: var(--danger-color);">{{ m.quantity }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center; color: var(--text-muted);">{{ m.previous_stock }}</td>
+                        <td style="text-align: center; font-weight: 700; color: var(--text-main);">{{ m.new_stock }}</td>
+                        <td><code>{{ m.reference_number|default:"-" }}</code></td>
+                        <td style="font-size: 0.82rem;">{{ m.user.username|default:"System" }}</td>
+                        <td style="font-size: 0.82rem; color: var(--text-muted);">{{ m.reason }} {% if m.notes %}- {{ m.notes }}{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            No stock movement records found for this product.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

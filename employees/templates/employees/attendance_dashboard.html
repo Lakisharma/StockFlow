@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Dashboard | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Attendance Management</h1>
+            <div class="page-subtitle">Real-time check-in, check-out, working hours, late tracking, and shift monitoring</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'attendance-calendar' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">calendar_month</span>
+                <span>Monthly Calendar View</span>
+            </a>
+            <a href="{% url 'leave-list' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">event_available</span>
+                <span>Leave Management</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #16a34a;">PRESENT TODAY</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #16a34a; margin-top: 4px;">{{ summary.present }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Total Staff Active: {{ summary.total_active }}</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #d97706;">LATE ARRIVALS</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #d97706; margin-top: 4px;">{{ summary.late }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Past shift grace period</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #2563eb;">ON LEAVE TODAY</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #2563eb; margin-top: 4px;">{{ summary.on_leave }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Approved leave requests</div>
+        </div>
+
+        <div class="side-card" style="padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #dc2626;">ABSENT TODAY</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #dc2626; margin-top: 4px;">{{ summary.absent }}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Unexplained absences</div>
+        </div>
+    </div>
+
+    <!-- Quick Check-In / Check-Out Widget -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Check-In Card -->
+        <div class="side-card" style="padding: 20px;">
+            <h3 style="margin-top: 0; color: #16a34a; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">login</span>
+                <span>Record Check-In</span>
+            </h3>
+            <form method="POST" action="{% url 'attendance-check-in' %}" style="display: flex; flex-direction: column; gap: 14px;">
+                {% csrf_token %}
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Employee</label>
+                    <select name="employee" class="input-control" required>
+                        <option value="">Select Employee</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.employee_code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Warehouse Location</label>
+                    <select name="warehouse" class="input-control">
+                        {% for w in warehouses %}
+                        <option value="{{ w.id }}">{{ w.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="page-actions-btn" style="background: #16a34a; border-color: #16a34a; padding: 10px;">Clock In / Check-In</button>
+            </form>
+        </div>
+
+        <!-- Check-Out Card -->
+        <div class="side-card" style="padding: 20px;">
+            <h3 style="margin-top: 0; color: #2563eb; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">logout</span>
+                <span>Record Check-Out</span>
+            </h3>
+            <form method="POST" action="{% url 'attendance-check-out' %}" style="display: flex; flex-direction: column; gap: 14px;">
+                {% csrf_token %}
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Employee</label>
+                    <select name="employee" class="input-control" required>
+                        <option value="">Select Checked-In Employee</option>
+                        {% for att in attendances %}
+                        {% if not att.check_out %}
+                        <option value="{{ att.employee.id }}">{{ att.employee.full_name }} (In: {{ att.check_in|time:"H:i" }})</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="page-actions-btn" style="background: #2563eb; border-color: #2563eb; padding: 10px; margin-top: 24px;">Clock Out / Check-Out</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Today's Attendance Table -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 16px;">Today's Attendance Register ({{ today|date:"d M Y" }})</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Emp Code</th>
+                    <th>Employee Name</th>
+                    <th>Warehouse</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Working Hours</th>
+                    <th>Late (Mins)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in attendances %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ a.employee.employee_code }}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">{{ a.employee.full_name }}</td>
+                    <td>{{ a.warehouse.name|default:'-' }}</td>
+                    <td style="font-weight: 700;">{{ a.check_in|time:"H:i"|default:'-' }}</td>
+                    <td style="font-weight: 700;">{{ a.check_out|time:"H:i"|default:'-' }}</td>
+                    <td style="font-weight: 800;">{{ a.working_hours }} hrs</td>
+                    <td style="color: {% if a.late_minutes > 0 %}#dc2626{% else %}var(--text-muted){% endif %};">{{ a.late_minutes }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if a.status == 'present' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif a.status == 'late' %}background-color: rgba(217, 119, 6, 0.15); color: #d97706;{% else %}background-color: rgba(37, 99, 235, 0.15); color: #2563eb;{% endif %}">
+                            {{ a.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No attendance entries recorded for today.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

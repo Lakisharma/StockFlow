@@ -1,0 +1,5 @@
+# StockFlow AI - Search Engine Robots Exclusion File
+# Private Enterprise Warehouse Application - Block Search Engine Indexing
+
+User-agent: *
+Disallow: /

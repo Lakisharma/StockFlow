@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockFlow AI Desktop</title>
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="desktop-body">
+
+    <!-- Custom Titlebar for Desktop Window Controls -->
+    <div class="desktop-titlebar">
+        <div class="titlebar-brand">
+            <span class="material-icons-round brand-icon">inventory_2</span>
+            <span class="brand-title">StockFlow AI</span>
+            <span class="badge-desktop-env">Desktop Client v1.0</span>
+        </div>
+        <div class="titlebar-controls">
+            <button id="btnWindowMinimize" title="Minimize"><span class="material-icons-round">remove</span></button>
+            <button id="btnWindowMaximize" title="Maximize"><span class="material-icons-round">crop_square</span></button>
+            <button id="btnWindowClose" class="btn-close-app" title="Close"><span class="material-icons-round">close</span></button>
+        </div>
+    </div>
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="loginScreen" class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-box">
+                    <span class="material-icons-round logo-icon">inventory_2</span>
+                </div>
+                <h2>StockFlow AI</h2>
+                <p>Enterprise Warehouse & Inventory Desktop Management</p>
+            </div>
+
+            <form id="desktopLoginForm">
+                <div class="form-group">
+                    <label for="inputUsername">Username or Email</label>
+                    <div class="input-with-icon">
+                        <span class="material-icons-round">person</span>
+                        <input type="text" id="inputUsername" placeholder="Enter username (e.g. admin)" required value="admin">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputPassword">Password</label>
+                    <div class="input-with-icon">
+                        <span class="material-icons-round">lock</span>
+                        <input type="password" id="inputPassword" placeholder="Enter password" required value="admin123">
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="chkRememberMe" checked> Remember Session
+                    </label>
+                    <a href="#" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                <div id="loginAlert" class="alert-error" style="display: none;"></div>
+
+                <button type="submit" id="btnLoginSubmit" class="btn-login">
+                    <span class="btn-text">Sign In to Desktop</span>
+                    <span class="material-icons-round btn-arrow">arrow_forward</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <span>Connecting to: <strong>http://127.0.0.1:8000/api/</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP INTERFACE (HIDDEN BEFORE LOGIN) -->
+    <div id="appContainer" class="app-container" style="display: none;">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="user-profile-summary">
+                <div class="avatar"><span class="material-icons-round">account_circle</span></div>
+                <div class="user-info">
+                    <strong id="sidebarUserName">Admin User</strong>
+                    <small id="sidebarUserRole">System Administrator</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <span class="material-icons-round">dashboard</span> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-view="products">
+                    <span class="material-icons-round">inventory_2</span> Products & Catalog
+                </a>
+                <a href="#" class="nav-item" data-view="inventory">
+                    <span class="material-icons-round">warehouse</span> Inventory Balances
+                </a>
+                <a href="#" class="nav-item" data-view="transfers">
+                    <span class="material-icons-round">sync_alt</span> Stock Transfers
+                </a>
+                <a href="#" class="nav-item" data-view="purchases">
+                    <span class="material-icons-round">shopping_bag</span> Purchase Orders
+                </a>
+                <a href="#" class="nav-item" data-view="sales">
+                    <span class="material-icons-round">point_of_sale</span> Sales & Dispatches
+                </a>
+                <a href="#" class="nav-item" data-view="backups">
+                    <span class="material-icons-round">cloud_download</span> Backup & Recovery
+                </a>
+                <a href="#" class="nav-item" data-view="notifications">
+                    <span class="material-icons-round">notifications</span> Notifications & Reminders
+                </a>
+                <a href="#" class="nav-item" data-view="aiAssistant">
+                    <span class="material-icons-round">smart_toy</span> AI Smart Assistant
+                </a>
+                <a href="#" class="nav-item" data-view="ocrScanner">
+                    <span class="material-icons-round">document_scanner</span> AI/OCR Bill Scanner
+                </a>
+                <a href="#" class="nav-item" data-view="accounting">
+                    <span class="material-icons-round">account_balance</span> Accounting & Expenses
+                </a>
+                <a href="#" class="nav-item" data-view="reports">
+                    <span class="material-icons-round">analytics</span> Reports & Analytics
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <span class="material-icons-round">settings</span> Settings & Users
+                </a>
+                <a href="#" class="nav-item" data-view="rapidScanner">
+                    <span class="material-icons-round">flash_on</span> Rapid Barcode Scanner
+                </a>
+                <a href="#" class="nav-item" data-view="suppliers">
+                    <span class="material-icons-round">local_shipping</span> Suppliers
+                </a>
+                <a href="#" class="nav-item" data-view="scanner">
+                    <span class="material-icons-round">qr_code_scanner</span> Barcode Lookup
+                </a>
+                <a href="#" class="nav-item" data-view="health">
+                    <span class="material-icons-round">health_and_safety</span> System Diagnostics
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btnDesktopLogout" class="btn-logout">
+                    <span class="material-icons-round">logout</span> Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Top Action Header -->
+            <header class="content-header">
+                <div class="search-bar">
+                    <span class="material-icons-round">search</span>
+                    <input type="text" id="desktopGlobalSearch" placeholder="Search SKU, Product, Barcode, Invoice...">
+                </div>
+
+                <div class="header-status" style="display:flex; align-items:center; gap: 16px;">
+                    <button id="btnToggleNotificationDrawer" class="btn-secondary" style="position:relative; padding: 6px 12px;">
+                        <span class="material-icons-round">notifications</span>
+                        <span id="headerUnreadBadge" class="badge badge-danger" style="position:absolute; top:-4px; right:-4px; font-size:10px; padding:2px 6px; border-radius:10px;">0</span>
+                    </button>
+                    <div class="status-indicator online" id="serverStatusBadge">
+                        <span class="dot"></span> Server Connected
+                    </div>
+                </div>
+            </header>
+
+            <!-- Slide-Out Notification Center Drawer -->
+            <div id="notificationDrawer" class="notification-drawer" style="display:none; position:fixed; top:60px; right:20px; width:360px; height:480px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.4); z-index:100; flex-direction:column; overflow:hidden;">
+                <div style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0; font-size:16px;">Notifications & Alerts</h3>
+                    <button id="btnMarkAllReadHeader" class="btn-sm btn-secondary">Mark All Read</button>
+                </div>
+                <div id="notificationDrawerList" style="flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                    <div class="text-center text-muted" style="padding:20px;">No new unread notifications.</div>
+                </div>
+            </div>
+
+            <!-- Dynamic Views Container -->
+            <div id="contentViews" class="content-views">
+
+                <!-- View 1: Dashboard -->
+                <div id="viewDashboard" class="view-panel active">
+                    <div class="page-title-block">
+                        <h2>Desktop Overview & Metrics</h2>
+                        <p>Live inventory truth connected to central Django backend</p>
+                    </div>
+
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">inventory_2</span>
+                            <div class="kpi-details">
+                                <span class="label">Total Products</span>
+                                <h3 id="kpiProducts">--</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">shopping_cart</span>
+                            <div class="kpi-details">
+                                <span class="label">Purchase Orders</span>
+                                <h3 id="kpiPurchases">--</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">receipt_long</span>
+                            <div class="kpi-details">
+                                <span class="label">Sales Dispatches</span>
+                                <h3 id="kpiSales">--</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">security</span>
+                            <div class="kpi-details">
+                                <span class="label">System Health</span>
+                                <h3 id="kpiHealth" class="text-success">Healthy</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 2: Products Catalog Table -->
+                <div id="viewProducts" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Product Catalog</h2>
+                            <p>Manage products, pricing, SKUs, barcodes, and stock limits</p>
+                        </div>
+                        <button id="btnOpenCreateProductModal" class="btn-primary flex-align">
+                            <span class="material-icons-round">add</span> Add New Product
+                        </button>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product Name</th>
+                                    <th>SKU</th>
+                                    <th>Barcode</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <tr><td colspan="8" class="text-center text-muted">Loading products...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 3: Inventory Balances Table -->
+                <div id="viewInventory" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Inventory Balances & Movements</h2>
+                            <p>Real-time physical stock counts across all warehouses</p>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Warehouse</th>
+                                    <th>Quantity</th>
+                                    <th>Batch / Expiry</th>
+                                    <th>Status</th>
+                                    <th>Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Loading inventory balances...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 4: Notifications & Reminder Center -->
+                <div id="viewNotifications" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Notification & Alert Center</h2>
+                            <p>Centralized business alerts for Low Stock, Expiry, Overdue Payments, and Approvals</p>
+                        </div>
+                        <button id="btnMarkAllReadMain" class="btn-secondary flex-align">
+                            <span class="material-icons-round">done_all</span> Mark All as Read
+                        </button>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>Priority</th>
+                                    <th>Category</th>
+                                    <th>Title & Message</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notificationsMainTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Loading system notifications...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 5: Backup & Disaster Recovery -->
+                <div id="viewBackups" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Backup, Disaster Recovery & Data Sync</h2>
+                            <p>Manage backend database snapshots, verification, and disaster recovery</p>
+                        </div>
+                        <button id="btnCreateManualBackup" class="btn-primary flex-align">
+                            <span class="material-icons-round">cloud_upload</span> Create Manual Backup
+                        </button>
+                    </div>
+
+                    <div class="kpi-grid" style="margin-bottom: 20px;">
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">history</span>
+                            <div class="kpi-details">
+                                <span class="label">Total Backups</span>
+                                <h3 id="kpiBackupCount">--</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">cloud_done</span>
+                            <div class="kpi-details">
+                                <span class="label">Last Backup Status</span>
+                                <h3 id="kpiBackupStatus" class="text-success">Completed</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">sync</span>
+                            <div class="kpi-details">
+                                <span class="label">Central DB Sync</span>
+                                <h3 class="text-success">Synchronized</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <h3>Database Backup Archives & History</h3>
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>Backup ID</th>
+                                    <th>Filename / Type</th>
+                                    <th>File Size</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backupsHistoryTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Loading backup history...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 6: AI Smart Assistant View -->
+                <div id="viewAiAssistant" class="view-panel">
+                    <div class="page-title-block">
+                        <h2>StockFlow AI Smart Assistant</h2>
+                        <p>Ask natural-language business questions in English, Hindi, or Hinglish</p>
+                    </div>
+
+                    <div class="scanner-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 500px;">
+                        <div id="aiChatHistory" class="chat-history-box" style="flex: 1; padding: 20px; overflow-y: auto;">
+                            <div class="chat-message assistant">
+                                <span class="material-icons-round icon">smart_toy</span>
+                                <div class="message-content">
+                                    <p>Hello! I am your StockFlow AI Assistant. Ask me anything about sales, low stock, purchases, or expenses in English, Hindi, or Hinglish.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="quick-chips-bar" style="padding: 10px 20px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="chip-btn" onclick="sendAiChip('Today\'s sales?')">Today's Sales</button>
+                            <button class="chip-btn" onclick="sendAiChip('Which products are low in stock?')">Low Stock Products</button>
+                            <button class="chip-btn" onclick="sendAiChip('aaj kitni purchase hui?')">Today's Purchases</button>
+                            <button class="chip-btn" onclick="sendAiChip('Create expense of $250 for transport')">+ Create Expense</button>
+                        </div>
+
+                        <form id="formAiChatInput" style="padding: 16px; display: flex; gap: 12px; border-top: 1px solid var(--border); background: var(--card-bg);">
+                            <input type="text" id="inputAiQuery" placeholder="Ask AI: 'aaj kitni sales hui?', 'show low stock'..." style="flex: 1;" required>
+                            <button type="submit" class="btn-primary flex-align">
+                                <span class="material-icons-round">send</span> Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- View 7: AI/OCR Bill Scanner Mode -->
+                <div id="viewOcrScanner" class="view-panel">
+                    <div class="page-title-block">
+                        <h2>AI/OCR Bill Scanner & Data Entry</h2>
+                        <p>Automatic bill extraction with mandatory human verification before saving</p>
+                    </div>
+
+                    <div class="scanner-card">
+                        <div id="ocrDropzone" class="ocr-dropzone">
+                            <span class="material-icons-round large-icon" style="color: var(--primary);">cloud_upload</span>
+                            <h3>Drag & Drop Bill Image / PDF File</h3>
+                            <p class="text-muted" style="margin-top:4px;">Supports JPG, PNG, WEBP, and PDF documents</p>
+                            <input type="file" id="ocrFileInput" style="display:none;" accept="image/*,.pdf">
+                            <button type="button" class="btn-primary" style="margin-top:16px;" onclick="document.getElementById('ocrFileInput').click()">
+                                Choose File
+                            </button>
+                        </div>
+
+                        <div id="ocrStatusArea" style="margin-top: 20px; display:none;">
+                            <div class="kpi-card" style="border-color: var(--primary);">
+                                <span class="material-icons-round icon">autorenew</span>
+                                <div>
+                                    <span class="badge badge-warning" id="ocrBadgeStatus">Processing...</span>
+                                    <h4 id="ocrFileNameDisplay">bill_sample.jpg</h4>
+                                    <p id="ocrStatusMsg" class="text-muted" style="font-size:12px;">Sending document to Django AI backend engine...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 8: Stock Transfers Table -->
+                <div id="viewTransfers" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Inter-Warehouse Stock Transfers</h2>
+                            <p>Transfer inventory stock between source and destination warehouses</p>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>Transfer #</th>
+                                    <th>Source Warehouse</th>
+                                    <th>Destination Warehouse</th>
+                                    <th>Total Quantity</th>
+                                    <th>Status</th>
+                                    <th>Transfer Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transfersTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Loading stock transfers...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 9: Purchase Orders Table -->
+                <div id="viewPurchases" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Purchase Orders & GRN Receiving</h2>
+                            <p>Manage purchase orders, supplier shipments, and goods receipt notes</p>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>PO Number</th>
+                                    <th>Supplier</th>
+                                    <th>Warehouse</th>
+                                    <th>Total Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchasesTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Loading purchase orders...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 10: Sales & Dispatches Table -->
+                <div id="viewSales" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Sales & Stock Out Dispatches</h2>
+                            <p>Manage sales orders, customer dispatches, invoices, and payments</p>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>Dispatch / Invoice #</th>
+                                    <th>Customer</th>
+                                    <th>Warehouse</th>
+                                    <th>Total Amount</th>
+                                    <th>Payment Status</th>
+                                    <th>Dispatch Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <tr><td colspan="7" class="text-center text-muted">Loading sales dispatches...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 11: Accounting, Expenses & Payments View -->
+                <div id="viewAccounting" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Accounting, Expenses & Cash Flow</h2>
+                            <p>Track business expenses, payment vouchers, receivables, and cash balances</p>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <h3 style="margin-bottom: 12px;">Operating Expenses History</h3>
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>Expense #</th>
+                                    <th>Category</th>
+                                    <th>Payment Method</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Expense Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Loading operating expenses...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 12: Reports & Analytics -->
+                <div id="viewReports" class="view-panel">
+                    <div class="page-title-block flex-between">
+                        <div>
+                            <h2>Reports, Analytics & Exports</h2>
+                            <p>Executive reporting dashboards, date-range filters, and CSV/Excel exports</p>
+                        </div>
+                        <div class="flex-gap">
+                            <button id="btnExportSalesCsv" class="btn-secondary flex-align">
+                                <span class="material-icons-round">download</span> Export Sales CSV
+                            </button>
+                            <button id="btnExportInventoryCsv" class="btn-secondary flex-align">
+                                <span class="material-icons-round">file_download</span> Export Stock CSV
+                            </button>
+                            <button id="btnPrintReports" class="btn-primary flex-align">
+                                <span class="material-icons-round">print</span> Print A4 Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">trending_up</span>
+                            <div class="kpi-details">
+                                <span class="label">Total Sales Revenue</span>
+                                <h3 id="reportKpiRevenue">$0.00</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">local_mall</span>
+                            <div class="kpi-details">
+                                <span class="label">Total Purchases</span>
+                                <h3 id="reportKpiPurchases">$0.00</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">inventory_2</span>
+                            <div class="kpi-details">
+                                <span class="label">Inventory Valuation</span>
+                                <h3 id="reportKpiStockValue">$0.00</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">warning</span>
+                            <div class="kpi-details">
+                                <span class="label">Low Stock Alerts</span>
+                                <h3 id="reportKpiLowStock" class="text-warning">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper" style="margin-top: 20px;">
+                        <h3>Live Warehouse Comparison Metrics</h3>
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>Warehouse Name</th>
+                                    <th>Code</th>
+                                    <th>Total Products</th>
+                                    <th>Physical Stock</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsComparisonTableBody">
+                                <tr><td colspan="5" class="text-center text-muted">Loading warehouse comparison metrics...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View 13: Settings View -->
+                <div id="viewSettings" class="view-panel">
+                    <div class="page-title-block">
+                        <h2>Desktop Settings, Profile & User Management</h2>
+                        <p>Manage user profile, security credentials, system roles, and appearance</p>
+                    </div>
+
+                    <div class="kpi-grid" style="margin-bottom: 20px;">
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">person</span>
+                            <div class="kpi-details">
+                                <span class="label">Logged-In Profile</span>
+                                <h3 id="profileNameDisplay">Admin User</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">admin_panel_settings</span>
+                            <div class="kpi-details">
+                                <span class="label">System Role</span>
+                                <h3 id="profileRoleDisplay">Super Administrator</h3>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="material-icons-round icon">security</span>
+                            <div class="kpi-details">
+                                <span class="label">Security Policy</span>
+                                <h3 class="text-success">JWT Enforced</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-table-wrapper" style="margin-bottom: 20px;">
+                        <div class="flex-between" style="margin-bottom: 12px;">
+                            <h3>Security & Account Actions</h3>
+                            <button id="btnOpenChangePasswordModal" class="btn-primary flex-align">
+                                <span class="material-icons-round">lock_reset</span> Change Password
+                            </button>
+                        </div>
+                        <p class="text-muted" style="font-size:13px;">Manage password policy and authentication credentials through central Django REST endpoints.</p>
+                    </div>
+
+                    <div class="card-table-wrapper">
+                        <h3>System Users & Role Management (Admin Panel)</h3>
+                        <table class="desktop-table">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="settingsUsersTableBody">
+                                <tr><td colspan="5" class="text-center text-muted">Loading system users...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Generic View Panel -->
+                <div id="viewGeneric" class="view-panel">
+                    <div class="page-title-block">
+                        <h2 id="genericViewTitle">Module View</h2>
+                        <p>Connected to central database API</p>
+                    </div>
+                    <div id="genericViewContent" class="generic-content-box"></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL 1: Create Product -->
+    <div id="modalCreateProduct" class="desktop-modal" style="display:none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Add New Product</h3>
+                <button class="btn-close-modal" id="btnCloseProductModal">&times;</button>
+            </div>
+            <form id="formCreateProduct" class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Product Name *</label>
+                        <input type="text" id="prodName" required placeholder="e.g. Samsung Galaxy S24">
+                    </div>
+                    <div class="form-group">
+                        <label>SKU Code *</label>
+                        <input type="text" id="prodSku" required placeholder="e.g. SAMS-S24-128">
+                    </div>
+                    <div class="form-group">
+                        <label>Barcode *</label>
+                        <input type="text" id="prodBarcode" required placeholder="e.g. 8901234567890">
+                    </div>
+                    <div class="form-group">
+                        <label>Selling Price *</label>
+                        <input type="number" step="0.01" id="prodPrice" required placeholder="799.99">
+                    </div>
+                    <div class="form-group">
+                        <label>Reorder Level</label>
+                        <input type="number" id="prodReorderLevel" value="10">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelProductModal">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Product to Server</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Change Password Modal -->
+    <div id="modalChangePassword" class="desktop-modal" style="display:none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Change Account Password</h3>
+                <button class="btn-close-modal" id="btnClosePasswordModal">&times;</button>
+            </div>
+            <form id="formChangePassword" class="modal-body">
+                <div class="form-group">
+                    <label>Current Password *</label>
+                    <input type="password" id="inputCurrentPass" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password *</label>
+                    <input type="password" id="inputNewPass" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password *</label>
+                    <input type="password" id="inputConfirmPass" required minlength="6">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelPasswordModal">Cancel</button>
+                    <button type="submit" class="btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../config/config.js"></script>
+    <script src="../services/apiService.js"></script>
+    <script src="../services/authService.js"></script>
+    <script src="../services/productService.js"></script>
+    <script src="../services/inventoryService.js"></script>
+    <script src="../services/purchaseService.js"></script>
+    <script src="../services/salesService.js"></script>
+    <script src="../services/transferService.js"></script>
+    <script src="../services/accountingService.js"></script>
+    <script src="../services/reportService.js"></script>
+    <script src="../services/ocrService.js"></script>
+    <script src="../services/aiAssistantService.js"></script>
+    <script src="../services/notificationService.js"></script>
+    <script src="../services/settingsService.js"></script>
+    <script src="../services/backupService.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

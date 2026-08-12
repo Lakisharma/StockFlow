@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Apply for Leave | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'leave-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Leave Management</a>
+            </div>
+            <h1 class="page-title">Submit Leave Application</h1>
+            <div class="page-subtitle">Apply for Casual, Sick, Earned, or Emergency Leave</div>
+        </div>
+    </div>
+
+    <div class="side-card" style="padding: 24px; max-width: 800px;">
+        <form method="POST">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Employee</label>
+                    <select name="employee" class="input-control" required>
+                        <option value="">Select Employee</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}">{{ emp.full_name }} ({{ emp.employee_code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Leave Type</label>
+                    <select name="leave_type" class="input-control" required>
+                        <option value="">Select Leave Type</option>
+                        {% for lt in leave_types %}
+                        <option value="{{ lt.id }}">{{ lt.name }} ({{ lt.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Start Date</label>
+                    <input type="date" name="start_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">End Date</label>
+                    <input type="date" name="end_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Number of Days</label>
+                    <input type="number" name="number_of_days" step="0.5" class="input-control" value="1.0" required style="font-weight: 800;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Reason for Leave</label>
+                <textarea name="reason" class="input-control" rows="3" placeholder="Provide reason for leave request..." required></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <a href="{% url 'leave-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 20px;">Cancel</a>
+                <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Submit Leave Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

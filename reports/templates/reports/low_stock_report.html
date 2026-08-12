@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Low Stock Alert Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Low Stock Shortages Report</h1>
+            <div class="page-subtitle">Products near or below minimum stock threshold requiring re-order replenishment</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <a href="{% url 'purchase-add' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">shopping_cart</span>
+                <span>Create Purchase</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Current Stock</th>
+                        <th style="text-align: center;">Min Threshold</th>
+                        <th style="text-align: center; color: var(--warning-color);">Shortage</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in low_stocks %}
+                    <tr>
+                        <td><strong>{{ s.product.name }}</strong></td>
+                        <td><code>{{ s.product.sku }}</code></td>
+                        <td>{{ s.warehouse.name }}</td>
+                        <td style="text-align: center; font-weight: 700; color: var(--warning-color);">{{ s.quantity }} {{ s.product.unit.short_name }}</td>
+                        <td style="text-align: center; color: var(--text-muted);">{{ s.min_stock_level }} {{ s.product.unit.short_name }}</td>
+                        <td style="text-align: center; font-weight: 700; color: var(--danger-color);">{{ s.min_stock_level|add:"-1" }}</td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'purchase-add' %}" class="nav-action-btn" title="Create Purchase Re-order">
+                                <span class="material-icons-round" style="font-size: 18px; color: var(--success-color);">add_shopping_cart</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">Great news! No low stock shortage items detected.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

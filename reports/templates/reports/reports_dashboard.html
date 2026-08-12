@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reports & Analytics Dashboard | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="reports-dashboard-content" style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header & Global Date Filter -->
+    <div class="page-header" style="margin-bottom: 0; align-items: flex-start; flex-wrap: wrap;">
+        <div>
+            <h1 class="page-title">Reports & Analytics Dashboard</h1>
+            <div class="page-subtitle">Real-time financial, inventory, purchase, warehouse, and tax analytics for StockFlow AI</div>
+        </div>
+        
+        <!-- Global Date Range Filter Selector -->
+        <div class="side-card" style="padding: 10px 15px; background-color: var(--bg-card);">
+            <form method="GET" action="{% url 'reports-dashboard' %}" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span class="material-icons-round" style="color: var(--primary-color);">date_range</span>
+                <select name="range_type" class="input-control" style="font-size: 0.82rem; padding: 6px 10px;" onchange="this.form.submit()">
+                    <option value="today" {% if range_type == 'today' %}selected{% endif %}>Today</option>
+                    <option value="yesterday" {% if range_type == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                    <option value="this_week" {% if range_type == 'this_week' %}selected{% endif %}>This Week</option>
+                    <option value="this_month" {% if range_type == 'this_month' %}selected{% endif %}>This Month</option>
+                    <option value="last_month" {% if range_type == 'last_month' %}selected{% endif %}>Last Month</option>
+                    <option value="this_year" {% if range_type == 'this_year' %}selected{% endif %}>This Year</option>
+                    <option value="all" {% if range_type == 'all' %}selected{% endif %}>All Time</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Metrics Cards Grid (Formatted in ₹ INR) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div class="metric-card">
+            <div class="metric-label">Total Products</div>
+            <div class="metric-value">{{ metrics.total_products }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--success-color);">
+            <div class="metric-label">Total Inventory Value</div>
+            <div class="metric-value" style="color: var(--success-color);">₹ {{ metrics.total_inventory_value|floatformat:2 }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--primary-color);">
+            <div class="metric-label">Total Purchase Amount</div>
+            <div class="metric-value" style="color: var(--primary-color);">₹ {{ metrics.total_purchase_amount|floatformat:2 }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--warning-color);">
+            <div class="metric-label">Low Stock Shortages</div>
+            <div class="metric-value" style="color: var(--warning-color);">{{ metrics.low_stock_count }}</div>
+        </div>
+        <div class="metric-card" style="border-left-color: var(--danger-color);">
+            <div class="metric-label">Out of Stock Items</div>
+            <div class="metric-value" style="color: var(--danger-color);">{{ metrics.out_of_stock_count }}</div>
+        </div>
+    </div>
+
+    <!-- 11 Report Types Navigation Hub -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round" style="color: var(--primary-color);">analytics</span>
+            <span>All Enterprise Reports</span>
+        </h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px;">
+            <a href="{% url 'report-inventory' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px; transition: transform 0.2s;">
+                <span class="material-icons-round" style="font-size: 28px; color: #2563eb;">inventory</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">1. Inventory Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Stock levels & location status</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-stock-movement' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #10b981;">history</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">2. Stock Movement</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Audit log of stock in/out</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-purchase' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #8b5cf6;">shopping_cart</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">3. Purchase Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Purchases, paid & balances</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-supplier' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #f59e0b;">local_shipping</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">4. Supplier Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Top vendors & outstanding</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-warehouse' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #06b6d4;">store</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">5. Warehouse Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Godown stock & utilization</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-low-stock' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #f97316;">warning</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">6. Low Stock Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Re-order alert shortages</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-out-of-stock' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #ef4444;">error</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">7. Out of Stock Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Zero-inventory alert items</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-product' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #ec4899;">category</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">8. Product Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Product sales & purchase metrics</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-stock-transfer' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #6366f1;">swap_horiz</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">9. Stock Transfer</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Inter-warehouse movements</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-gst' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #14b8a6;">receipt_long</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">10. GST / Tax Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">CGST, SGST, IGST summaries</div>
+                </div>
+            </a>
+
+            <a href="{% url 'report-valuation' %}" style="text-decoration: none; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); display: flex; align-items: center; gap: 12px;">
+                <span class="material-icons-round" style="font-size: 28px; color: #84cc16;">account_balance_wallet</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">11. Valuation Report</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Cost price valuation metrics</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Warehouse Side-by-Side Comparison Tool Widget -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round" style="color: var(--primary-color);">compare_arrows</span>
+            <span>Side-by-Side Warehouse Comparison Analysis</span>
+        </h3>
+
+        <form method="GET" action="{% url 'reports-dashboard' %}" style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap;">
+            <input type="hidden" name="range_type" value="{{ range_type }}">
+            <div class="form-group" style="margin: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">Warehouse A</label>
+                <select name="wh1" class="input-control" onchange="this.form.submit()">
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if wh1_selected == wh.id %}selected{% endif %}>{{ wh.name }} ({{ wh.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">Warehouse B</label>
+                <select name="wh2" class="input-control" onchange="this.form.submit()">
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if wh2_selected == wh.id %}selected{% endif %}>{{ wh.name }} ({{ wh.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+
+        {% if comparison %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Warehouse A Box -->
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--primary-color); margin-bottom: 12px;">{{ comparison.wh1.name }}</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem;">
+                    <div>Total Products: <strong>{{ comparison.wh1.total_products }}</strong></div>
+                    <div>Total Stock Qty: <strong>{{ comparison.wh1.total_qty }}</strong></div>
+                    <div>Inventory Valuation: <strong>₹ {{ comparison.wh1.valuation|floatformat:2 }}</strong></div>
+                    <div>Low Stock Shortages: <strong style="color: var(--warning-color);">{{ comparison.wh1.low_stock }}</strong></div>
+                    <div>Out of Stock Items: <strong style="color: var(--danger-color);">{{ comparison.wh1.out_stock }}</strong></div>
+                </div>
+            </div>
+
+            <!-- Warehouse B Box -->
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--success-color); margin-bottom: 12px;">{{ comparison.wh2.name }}</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem;">
+                    <div>Total Products: <strong>{{ comparison.wh2.total_products }}</strong></div>
+                    <div>Total Stock Qty: <strong>{{ comparison.wh2.total_qty }}</strong></div>
+                    <div>Inventory Valuation: <strong>₹ {{ comparison.wh2.valuation|floatformat:2 }}</strong></div>
+                    <div>Low Stock Shortages: <strong style="color: var(--warning-color);">{{ comparison.wh2.low_stock }}</strong></div>
+                    <div>Out of Stock Items: <strong style="color: var(--danger-color);">{{ comparison.wh2.out_stock }}</strong></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Category Analytics Breakdown Card -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Category-wise Analytics Breakdown
+        </h3>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th style="text-align: center;">Product Count</th>
+                        <th style="text-align: center;">Stock Qty</th>
+                        <th style="text-align: right;">Inventory Valuation</th>
+                        <th style="text-align: right;">Purchase Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in category_analytics %}
+                    <tr>
+                        <td><strong>{{ cat.category.name }}</strong></td>
+                        <td style="text-align: center;">{{ cat.product_count }}</td>
+                        <td style="text-align: center;">{{ cat.stock_qty }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--success-color);">₹ {{ cat.inventory_value|floatformat:2 }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--primary-color);">₹ {{ cat.purchase_value|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="product-form-content" style="max-width: 1000px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 25px;">
+        <div>
+            <h1 class="page-title">{{ title }}</h1>
+            <div class="page-subtitle">Configure enterprise inventory specifications and prices</div>
+        </div>
+        <a href="{% url 'product-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round">arrow_back</span>
+            <span>Back to List</span>
+        </a>
+    </div>
+
+    <!-- Multi-Section Form -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <!-- Tab Navigation Headers -->
+        <div class="form-tab-nav">
+            <button type="button" class="form-tab-btn active" onclick="switchFormTab('basicInfoSection', this)">
+                <span class="material-icons-round" style="font-size: 18px;">info</span>
+                <span>1. Basic Info</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('pricingSection', this)">
+                <span class="material-icons-round" style="font-size: 18px;">payments</span>
+                <span>2. Pricing</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('inventorySection', this)">
+                <span class="material-icons-round" style="font-size: 18px;">inventory_2</span>
+                <span>3. Inventory</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('identificationSection', this)">
+                <span class="material-icons-round" style="font-size: 18px;">tag</span>
+                <span>4. Identification</span>
+            </button>
+            <button type="button" class="form-tab-btn" onclick="switchFormTab('additionalSection', this)">
+                <span class="material-icons-round" style="font-size: 18px;">more_horiz</span>
+                <span>5. Additional</span>
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <form method="POST" enctype="multipart/form-data" id="productSubmitForm" style="padding: 30px; display: flex; flex-direction: column; gap: 20px;">
+            {% csrf_token %}
+
+            <!-- Error Banner -->
+            {% if form.errors %}
+            <div class="alert-item alert-danger" style="padding: 15px; margin-bottom: 10px; flex-direction: column; align-items: flex-start; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-icons-round alert-item-icon">error</span>
+                    <span class="alert-message"><strong>Please correct the highlighted validation errors:</strong></span>
+                </div>
+                <ul style="font-size: 0.85rem; margin-top: 5px; color: var(--text-main); padding-left: 20px;">
+                    {% for field, errors in form.errors.items %}
+                        <li><strong>{{ field|title }}:</strong> {{ errors.0 }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- ========================================== -->
+            <!-- SECTION 1 — BASIC INFORMATION -->
+            <!-- ========================================== -->
+            <div id="basicInfoSection" class="form-section-pane active">
+                <div style="display: grid; grid-template-columns: 200px 1fr; gap: 30px; flex-wrap: wrap;">
+                    <!-- Image Upload Component -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                        <label class="form-label" style="text-align: center; width: 100%;">Product Image</label>
+                        <div style="position: relative; width: 150px; height: 150px; border-radius: 12px; border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; background-color: var(--bg-main); overflow: hidden;" id="imagePreviewContainer">
+                            {% if object.image %}
+                                <img src="{{ object.image.url }}" id="formImagePreview" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <span class="material-icons-round" style="font-size: 48px; color: var(--text-muted);" id="formImagePlaceholder">add_photo_alternate</span>
+                                <img src="" id="formImagePreview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            {% endif %}
+                        </div>
+                        <div style="display: flex; gap: 8px; justify-content: center; width: 100%;">
+                            <button type="button" class="btn-demo" style="padding: 6px 12px; font-size: 0.78rem;" onclick="document.getElementById('id_image').click()">
+                                Choose Image
+                            </button>
+                            <button type="button" class="btn-demo" style="padding: 6px 12px; font-size: 0.78rem; color: var(--danger-color);" onclick="clearImageUpload()">
+                                Remove
+                            </button>
+                        </div>
+                        <!-- Hidden Django File Field -->
+                        <div style="display: none;">
+                            {{ form.image }}
+                        </div>
+                    </div>
+
+                    <!-- Fields Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1;">
+                        <!-- Product Name -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" for="{{ form.name.id_for_label }}">Product Name <span style="color: var(--danger-color);">*</span></label>
+                            <div class="input-wrapper">
+                                {{ form.name }}
+                            </div>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.category.id_for_label }}">Category <span style="color: var(--danger-color);">*</span></label>
+                            <div class="input-wrapper">
+                                {{ form.category }}
+                            </div>
+                        </div>
+
+                        <!-- Brand -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.brand.id_for_label }}">Brand</label>
+                            <div class="input-wrapper">
+                                {{ form.brand }}
+                            </div>
+                        </div>
+
+                        <!-- Unit -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.unit.id_for_label }}">Unit <span style="color: var(--danger-color);">*</span></label>
+                            <div class="input-wrapper">
+                                {{ form.unit }}
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+                            <div class="input-wrapper">
+                                {{ form.status }}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                            <div class="input-wrapper">
+                                {{ form.description }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 2 — PRICING -->
+            <!-- ========================================== -->
+            <div id="pricingSection" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Purchase Price -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.purchase_price.id_for_label }}">Purchase Price ($) <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">
+                            {{ form.purchase_price }}
+                        </div>
+                    </div>
+
+                    <!-- Selling Price -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.selling_price.id_for_label }}">Selling Price ($) <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">
+                            {{ form.selling_price }}
+                        </div>
+                    </div>
+
+                    <!-- MRP -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.mrp.id_for_label }}">MRP ($) <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">
+                            {{ form.mrp }}
+                        </div>
+                    </div>
+
+                    <!-- Discount -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.discount.id_for_label }}">Discount Amount ($)</label>
+                        <div class="input-wrapper">
+                            {{ form.discount }}
+                        </div>
+                    </div>
+
+                    <!-- GST Rate -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.gst_rate.id_for_label }}">GST Rate (%) <span style="color: var(--danger-color);">*</span></label>
+                        <div class="input-wrapper">
+                            {{ form.gst_rate }}
+                        </div>
+                    </div>
+
+                    <!-- Tax Type -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.tax_type.id_for_label }}">Tax Type</label>
+                        <div class="input-wrapper">
+                            {{ form.tax_type }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 3 — INVENTORY -->
+            <!-- ========================================== -->
+            <div id="inventorySection" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Opening Stock -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.opening_stock.id_for_label }}">Opening Stock</label>
+                        <div class="input-wrapper">
+                            {{ form.opening_stock }}
+                        </div>
+                    </div>
+
+                    <!-- Current Stock -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.current_stock.id_for_label }}">Current Stock</label>
+                        <div class="input-wrapper">
+                            {{ form.current_stock }}
+                        </div>
+                    </div>
+
+                    <!-- Min Stock Level -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.min_stock_level.id_for_label }}">Minimum Stock Level (Alert threshold)</label>
+                        <div class="input-wrapper">
+                            {{ form.min_stock_level }}
+                        </div>
+                    </div>
+
+                    <!-- Max Stock Level -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.max_stock_level.id_for_label }}">Maximum Stock Level</label>
+                        <div class="input-wrapper">
+                            {{ form.max_stock_level }}
+                        </div>
+                    </div>
+
+                    <!-- Warehouse -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.warehouse.id_for_label }}">Warehouse Location</label>
+                        <div class="input-wrapper">
+                            {{ form.warehouse }}
+                        </div>
+                    </div>
+
+                    <!-- Stock Alert Switch -->
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 25px;">
+                        {{ form.stock_alert }}
+                        <label class="form-label" style="margin-bottom: 0;" for="{{ form.stock_alert.id_for_label }}">Enable low stock alerts</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 4 — PRODUCT IDENTIFICATION -->
+            <!-- ========================================== -->
+            <div id="identificationSection" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- SKU Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.sku.id_for_label }}">SKU (Stock Keeping Unit)</label>
+                        <div class="input-wrapper">
+                            {{ form.sku }}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                            {{ form.auto_generate_sku }}
+                            <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0;" for="{{ form.auto_generate_sku.id_for_label }}">
+                                Auto-generate SKU using Category Prefix
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Barcode Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.barcode.id_for_label }}">Barcode</label>
+                        <div class="input-wrapper">
+                            {{ form.barcode }}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                            {{ form.auto_generate_barcode }}
+                            <label style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0;" for="{{ form.auto_generate_barcode.id_for_label }}">
+                                Auto-generate random Barcode
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Product Code -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.product_code.id_for_label }}">Internal Product Code</label>
+                        <div class="input-wrapper">
+                            {{ form.product_code }}
+                        </div>
+                    </div>
+
+                    <!-- HSN Code -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.hsn_code.id_for_label }}">HSN Code (Tax classification)</label>
+                        <div class="input-wrapper">
+                            {{ form.hsn_code }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECTION 5 — ADDITIONAL INFORMATION -->
+            <!-- ========================================== -->
+            <div id="additionalSection" class="form-section-pane" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Weight -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.weight.id_for_label }}">Weight (e.g. kg / lbs)</label>
+                        <div class="input-wrapper">
+                            {{ form.weight }}
+                        </div>
+                    </div>
+
+                    <!-- Dimensions -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.dimensions.id_for_label }}">Dimensions (LxWxH)</label>
+                        <div class="input-wrapper">
+                            {{ form.dimensions }}
+                        </div>
+                    </div>
+
+                    <!-- Manufacturer -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.manufacturer.id_for_label }}">Manufacturer</label>
+                        <div class="input-wrapper">
+                            {{ form.manufacturer }}
+                        </div>
+                    </div>
+
+                    <!-- Country of Origin -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.country_of_origin.id_for_label }}">Country of Origin</label>
+                        <div class="input-wrapper">
+                            {{ form.country_of_origin }}
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label" for="{{ form.notes.id_for_label }}">Internal Notes</label>
+                        <div class="input-wrapper">
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <a href="{% url 'product-list' %}" class="btn-demo" style="text-decoration: none; padding: 12px 24px;">
+                    Cancel
+                </a>
+                <button type="submit" class="page-actions-btn" style="padding: 12px 24px;">
+                    <span class="material-icons-round" style="font-size: 18px;">save</span>
+                    <span>Save Product</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchFormTab(sectionId, element) {
+        // Toggle tab headers active state
+        const tabBtns = document.querySelectorAll('.form-tab-btn');
+        tabBtns.forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        
+        // Hide all section panes
+        const panes = document.querySelectorAll('.form-section-pane');
+        panes.forEach(pane => {
+            pane.style.display = 'none';
+            pane.classList.remove('active');
+        });
+        
+        // Show current active section pane
+        const activePane = document.getElementById(sectionId);
+        activePane.style.display = 'block';
+        activePane.classList.add('active');
+    }
+
+    // Dynamic Image Preview Trigger
+    const fileInput = document.getElementById('id_image');
+    const imagePreview = document.getElementById('formImagePreview');
+    const imagePlaceholder = document.getElementById('formImagePlaceholder');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    if (imagePlaceholder) imagePlaceholder.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    function clearImageUpload() {
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        if (imagePreview) {
+            imagePreview.src = '';
+            imagePreview.style.display = 'none';
+        }
+        if (imagePlaceholder) {
+            imagePlaceholder.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}

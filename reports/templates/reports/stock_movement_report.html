@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock Movement Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Stock Movement Report</h1>
+            <div class="page-subtitle">Audit trail of all inbound and outbound stock transactions</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 16px;">Print</button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="side-card" style="padding: 20px;">
+        <form method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label">Transaction Type</label>
+                <select name="transaction_type" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    {% for key, label in transaction_types %}
+                        <option value="{{ key }}" {% if selected_tx == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label">Warehouse</label>
+                <select name="warehouse" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Warehouses</option>
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if selected_wh == wh.id|stringformat:"i" %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; flex: 1;">Filter</button>
+                <a href="{% url 'report-stock-movement' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; justify-content: center;">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Type</th>
+                        <th style="text-align: center;">Quantity Change</th>
+                        <th style="text-align: center;">Prev &rarr; New Stock</th>
+                        <th>Reference #</th>
+                        <th>User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movements %}
+                    <tr>
+                        <td style="font-size: 0.82rem;">{{ m.created_at|date:"M d, Y H:i" }}</td>
+                        <td><strong>{{ m.product.name }}</strong> <span style="font-size: 0.75rem; color: var(--text-muted);">(SKU: {{ m.product.sku }})</span></td>
+                        <td>{{ m.warehouse.name }}</td>
+                        <td><span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ m.get_transaction_type_display }}</span></td>
+                        <td style="text-align: center; font-weight: 700; color: {% if m.quantity > 0 %}var(--success-color){% else %}var(--danger-color){% endif %};">
+                            {% if m.quantity > 0 %}+{% endif %}{{ m.quantity }}
+                        </td>
+                        <td style="text-align: center; font-size: 0.85rem;">{{ m.previous_stock }} &rarr; <strong>{{ m.new_stock }}</strong></td>
+                        <td><code>{{ m.reference_number|default:"-" }}</code></td>
+                        <td style="font-size: 0.82rem;">{{ m.user.username|default:"System" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No stock movement audit records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

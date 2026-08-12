@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Security Dashboard & Lockout Manager | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'admin-control-center' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Admin Control Center</a>
+            </div>
+            <h1 class="page-title">Security Policies & Lockout Manager</h1>
+            <div class="page-subtitle">Configure failed login lockout thresholds, password policies, and unlock locked accounts</div>
+        </div>
+    </div>
+
+    <!-- Security Policy Form & Maintenance Mode Toggle -->
+    <div class="side-card" style="padding: 24px;">
+        <h3 style="margin-top: 0; margin-bottom: 18px;">Security Policy Configuration</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Max Failed Login Attempts</label>
+                    <input type="number" name="max_failed_attempts" class="input-control" value="{{ policy.max_failed_attempts }}" required style="font-weight: 800;">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Lockout Duration (Minutes)</label>
+                    <input type="number" name="lockout_duration_mins" class="input-control" value="{{ policy.lockout_duration_mins }}" required style="font-weight: 800;">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Inactivity Timeout (Minutes)</label>
+                    <input type="number" name="inactivity_timeout_mins" class="input-control" value="{{ policy.inactivity_timeout_mins }}" required style="font-weight: 800;">
+                </div>
+            </div>
+
+            <!-- Maintenance Mode Card -->
+            <div style="padding: 16px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; margin-bottom: 18px;">
+                <label style="display: flex; align-items: center; gap: 10px; font-weight: 800; color: #dc2626; cursor: pointer;">
+                    <input type="checkbox" name="enable_maintenance_mode" {% if policy.enable_maintenance_mode %}checked{% endif %} style="width: 18px; height: 18px;">
+                    <span>Enable System Maintenance Mode (Exempts Super Admins)</span>
+                </label>
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 0.8rem; font-weight: 700;">Maintenance Notice Message:</label>
+                    <textarea name="maintenance_message" class="input-control" rows="2" style="margin-top: 4px;">{{ policy.maintenance_message }}</textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Save Security Policy Settings</button>
+        </form>
+    </div>
+
+    <!-- Locked User Accounts Table -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 14px; color: #dc2626;">Locked User Accounts</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in locked_profiles %}
+                <tr>
+                    <td style="font-weight: 800;">{{ profile.user.username }}</td>
+                    <td>{{ profile.user.email }}</td>
+                    <td><span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary-color); padding: 3px 8px;">{{ profile.role.name|default:'User' }}</span></td>
+                    <td><span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #dc2626; padding: 3px 8px;">Locked (Inactive)</span></td>
+                    <td>
+                        <form method="POST" action="{% url 'admin-user-unlock' profile.user.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="page-actions-btn" style="padding: 4px 12px; font-size: 0.78rem; background: #16a34a; border-color: #16a34a;">Unlock Account</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        No user accounts currently locked out.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

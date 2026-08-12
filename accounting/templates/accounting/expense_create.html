@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Record Expense | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'expense-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Expense Management</a>
+            </div>
+            <h1 class="page-title">Record Operating Expense</h1>
+            <div class="page-subtitle">Record warehouse, utility, salary, rent, or maintenance expenses</div>
+        </div>
+    </div>
+
+    <div class="side-card" style="padding: 24px; max-width: 800px;">
+        <form method="POST">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Expense Number</label>
+                    <input type="text" class="input-control" value="{{ auto_expense_number }}" readonly style="font-family: monospace; font-weight: 800; background: var(--bg-hover);">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Expense Date</label>
+                    <input type="date" name="expense_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Expense Category</label>
+                    <select name="category" class="input-control" required>
+                        <option value="">Select Category</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Amount (₹)</label>
+                    <input type="number" name="amount" step="0.01" class="input-control" placeholder="0.00" required style="font-weight: 800; font-size: 1.1rem;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Expense Description</label>
+                <input type="text" name="description" class="input-control" placeholder="e.g. July Warehouse Rent & Electricity Bill" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Payment Method</label>
+                    <select name="payment_method" class="input-control" required>
+                        <option value="bank_transfer">Bank Transfer (NEFT/RTGS/IMPS)</option>
+                        <option value="upi">UPI / Online</option>
+                        <option value="cash">Cash</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="card">Credit/Debit Card</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Payment Account</label>
+                    <select name="account" class="input-control" required>
+                        {% for a in accounts %}
+                        <option value="{{ a.id }}">{{ a.account_name }} ({{ a.get_account_type_display }}) - Bal: ₹{{ a.current_balance|floatformat:2 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Warehouse (Optional)</label>
+                    <select name="warehouse" class="input-control">
+                        <option value="">General (All Warehouses)</option>
+                        {% for w in warehouses %}
+                        <option value="{{ w.id }}">{{ w.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Reference / Voucher No.</label>
+                    <input type="text" name="reference_number" class="input-control" placeholder="e.g. VOUCHER-901" style="font-family: monospace;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Notes / Remarks</label>
+                <textarea name="notes" class="input-control" rows="3" placeholder="Additional internal remarks..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <a href="{% url 'expense-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 20px;">Cancel</a>
+                <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Save & Pay Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

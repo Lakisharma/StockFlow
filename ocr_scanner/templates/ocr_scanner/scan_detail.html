@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Scan Audit Detail: {{ scan.scan_id }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="scan-detail-content" style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Scan Record: {{ scan.scan_id }}</h1>
+            <div class="page-subtitle">Processed Document Audit Record & Raw Data Outputs</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'ocr-history' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Back to History</span>
+            </a>
+            <a href="{% url 'ocr-verify' scan.id %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">rate_review</span>
+                <span>Verification View</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scan Overview Card -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Scan Overview & Metadata
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Filename</div>
+                <div style="font-weight: 700; color: var(--text-main);">{{ scan.original_filename }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Processing Status</div>
+                <div><span class="badge badge-info">{{ scan.get_status_display }}</span></div>
+            </div>
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Overall Confidence</div>
+                <div style="font-weight: 700; color: var(--success-color);">{{ scan.overall_confidence }}%</div>
+            </div>
+            <div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Linked Purchase Invoice</div>
+                <div>
+                    {% if scan.created_purchase %}
+                        <a href="{% url 'purchase-detail' scan.created_purchase.id %}" style="font-weight: 700; color: var(--primary-color);">#{{ scan.created_purchase.bill_number }}</a>
+                    {% else %}
+                        <span style="color: var(--text-muted);">Not converted yet</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extracted Raw Output Card -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Raw OCR Text Extraction Output
+        </h3>
+        <pre style="background-color: #1e293b; color: #f8fafc; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; max-height: 250px; overflow: auto; white-space: pre-wrap;">{{ scan.raw_extracted_text }}</pre>
+    </div>
+
+    <!-- Audit History Log Card -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Verification Audit History Log
+        </h3>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Action</th>
+                        <th>User</th>
+                        <th>Field Name</th>
+                        <th>Old Value</th>
+                        <th>New Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in audits %}
+                    <tr>
+                        <td style="font-size: 0.82rem;">{{ a.created_at|date:"M d, Y H:i" }}</td>
+                        <td><span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ a.action }}</span></td>
+                        <td style="font-size: 0.82rem;">{{ a.user.username|default:"System" }}</td>
+                        <td><code>{{ a.field_name|default:"-" }}</code></td>
+                        <td style="font-size: 0.82rem; color: var(--danger-color);">{{ a.old_value|default:"-" }}</td>
+                        <td style="font-size: 0.82rem; color: var(--success-color);">{{ a.new_value|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 15px;">No audit corrections logged yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Warehouse Directory | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Warehouse & Godown Directory</h1>
+            <div class="page-subtitle">Centralized directory of all company warehouses, godowns, branch locations, and managers</div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: flex; gap: 12px;">
+            <input type="text" name="search" class="input-control" placeholder="Search warehouse name, code, city, manager..." value="{{ search|default:'' }}">
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Search</button>
+            <a href="{% url 'warehouse-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Reset</a>
+        </form>
+    </div>
+
+    <!-- Warehouse Master Table -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Warehouse Code</th>
+                    <th>Warehouse Name</th>
+                    <th>Type</th>
+                    <th>City / State</th>
+                    <th>Manager Name</th>
+                    <th>Contact Phone</th>
+                    <th>Capacity</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in warehouses %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 800; color: var(--primary-color);">{{ w.code }}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">{{ w.name }}</td>
+                    <td><span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary-color); padding: 3px 8px;">{{ w.get_warehouse_type_display }}</span></td>
+                    <td>{{ w.city|default:'-' }}{% if w.state %}, {{ w.state }}{% endif %}</td>
+                    <td style="font-weight: 700;">{{ w.manager_name|default:'Unassigned' }}</td>
+                    <td>{{ w.phone|default:'-' }}</td>
+                    <td style="font-weight: 800;">{{ w.total_capacity }} {{ w.capacity_unit }}</td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if w.status == 'active' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                            {{ w.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'warehouse-detail' w.id %}" class="btn-demo" style="text-decoration: none; padding: 4px 10px; font-size: 0.8rem;">View Profile</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                        No warehouses registered.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

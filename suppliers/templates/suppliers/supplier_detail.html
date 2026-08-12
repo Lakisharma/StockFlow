@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supplier Profile: {{ supplier.name }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="supplier-detail-content" style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Supplier Profile</h1>
+            <div class="page-subtitle">Detailed profiles, billing specs, active bank parameters and purchase timeline logs</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'supplier-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Back to List</span>
+            </a>
+            <a href="{% url 'supplier-edit' supplier.id %}" class="page-actions-btn" style="text-decoration: none; background-color: var(--warning-color); padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round" style="color: #ffffff;">edit</span>
+                <span style="color: #ffffff;">Edit Profile</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <!-- Outstanding Balance -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--danger-light); color: var(--danger-color);">
+                <span class="material-icons-round">account_balance_wallet</span>
+            </div>
+            <div class="metric-value">${{ supplier.outstanding_balance }}</div>
+            <div class="metric-label">Outstanding Balance</div>
+        </div>
+        <!-- Total Purchases Amount -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--primary-light); color: var(--primary-color);">
+                <span class="material-icons-round">shopping_cart</span>
+            </div>
+            <div class="metric-value">${{ purchase_stats.total_amount|floatformat:2 }}</div>
+            <div class="metric-label">Total Purchases</div>
+        </div>
+        <!-- Pending Bills -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--warning-light); color: var(--warning-color);">
+                <span class="material-icons-round">pending_actions</span>
+            </div>
+            <div class="metric-value">${{ purchase_stats.pending_amount|floatformat:2 }}</div>
+            <div class="metric-label">Pending Amount</div>
+        </div>
+        <!-- Credit Limit -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: var(--success-light); color: var(--success-color);">
+                <span class="material-icons-round">credit_card</span>
+            </div>
+            <div class="metric-value">${{ supplier.credit_limit }}</div>
+            <div class="metric-label">Credit Limit</div>
+        </div>
+    </div>
+
+    <!-- Main Detail Grid -->
+    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 25px; flex-wrap: wrap;">
+        <!-- Left Column: Supplier Identity, Address, and Banks -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Profile Summary Card -->
+            <div class="side-card" style="padding: 25px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-color); background-color: var(--bg-main); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 2.2rem;">
+                    {% if supplier.logo %}
+                        <img src="{{ supplier.logo.url }}" alt="{{ supplier.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        {{ supplier.name|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">{{ supplier.name }}</h3>
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">{{ supplier.company_name }}</span>
+                    <div style="margin-top: 8px;">
+                        {% if supplier.status == 'active' %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact & Address Panel -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Contacts -->
+                <div>
+                    <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.5px;">Contact Info</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.88rem;">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+                            <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">phone</span>
+                            <span>{{ supplier.phone }}</span>
+                        </div>
+                        {% if supplier.alternate_phone %}
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+                            <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">call_end</span>
+                            <span>{{ supplier.alternate_phone }}</span>
+                        </div>
+                        {% endif %}
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main); word-break: break-all;">
+                            <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">email</span>
+                            <span>{{ supplier.email }}</span>
+                        </div>
+                        {% if supplier.website %}
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+                            <span class="material-icons-round" style="font-size: 16px; color: var(--text-muted);">public</span>
+                            <a href="{{ supplier.website }}" target="_blank" style="color: var(--primary-color); text-decoration: none;">{{ supplier.website }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div>
+                    <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.5px;">Billing Address</h4>
+                    <div style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6;">
+                        {{ supplier.address }}<br>
+                        {{ supplier.city }}, {{ supplier.state }} - {{ supplier.pin_code }}<br>
+                        {{ supplier.country }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tax & Bank details -->
+            <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Tax -->
+                <div>
+                    <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.5px;">Tax parameters</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: var(--text-main);">
+                        <div>GSTIN: <strong><code>{{ supplier.gstin|default:"-" }}</code></strong></div>
+                        <div>PAN: <strong><code>{{ supplier.pan|default:"-" }}</code></strong></div>
+                        <div>Reg Type: <strong style="text-transform: capitalize;">{{ supplier.tax_reg_type }}</strong></div>
+                    </div>
+                </div>
+
+                <!-- Bank details -->
+                {% if supplier.bank_name %}
+                <div>
+                    <h4 style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.5px;">Bank accounts</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: var(--text-main);">
+                        <div>Bank: <strong>{{ supplier.bank_name }}</strong></div>
+                        <div>Holder: <strong>{{ supplier.holder_name }}</strong></div>
+                        <div>A/c No: <strong><code>{{ supplier.account_number }}</code></strong></div>
+                        <div>IFSC: <strong><code>{{ supplier.ifsc_code }}</code></strong></div>
+                        <div>Branch: <strong>{{ supplier.branch }}</strong></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Purchase History & Timeline activity logs -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Purchase Summary Panel -->
+            <div class="side-card" style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    Purchase Transaction History (Simulated)
+                </h3>
+                
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice Number</th>
+                                <th>Purchase Date</th>
+                                <th>Total Amount</th>
+                                <th>Paid Amount</th>
+                                <th>Pending Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bill in purchase_history %}
+                            <tr>
+                                <td><code>{{ bill.invoice_number }}</code></td>
+                                <td>{{ bill.purchase_date }}</td>
+                                <td style="font-weight: 600; color: var(--text-main);">${{ bill.amount|floatformat:2 }}</td>
+                                <td style="color: var(--success-color);">${{ bill.paid_amount|floatformat:2 }}</td>
+                                <td style="color: var(--danger-color);">${{ bill.pending_amount|floatformat:2 }}</td>
+                                <td>
+                                    {% if bill.status == 'Paid' %}
+                                        <span class="badge badge-success">Paid</span>
+                                    {% else %}
+                                        <span class="badge badge-danger" style="background-color: var(--warning-light); color: var(--warning-color);">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="nav-action-btn" title="View Bill" onclick="alert('Viewing invoice details: {{ bill.invoice_number }}')" style="width: 28px; height: 28px;">
+                                        <span class="material-icons-round" style="font-size: 14px;">visibility</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notes & Remarks Card -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; flex-wrap: wrap;">
+                <div class="side-card" style="padding: 20px;">
+                    <h4 style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
+                        Payment Terms
+                    </h4>
+                    <div style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6;">
+                        Payment Terms: <strong>{{ supplier.payment_terms }}</strong><br>
+                        Due Duration: <strong>{{ supplier.due_days }} Days</strong>
+                    </div>
+                </div>
+                <div class="side-card" style="padding: 20px;">
+                    <h4 style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">
+                        Internal Remarks
+                    </h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                        {{ supplier.internal_remarks|default:"No internal remarks loaded." }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Activity Logs Timeline -->
+            <div class="side-card" style="padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    Activity History Logs
+                </h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; max-height: 250px; overflow-y: auto;">
+                    {% for log in history_logs %}
+                    <div style="display: flex; gap: 12px; font-size: 0.88rem; align-items: flex-start;">
+                        <div style="margin-top: 4px; width: 8px; height: 8px; border-radius: 50%; background-color: var(--primary-color); flex-shrink: 0;"></div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                <strong style="color: var(--text-main); font-size: 0.85rem; text-transform: capitalize;">{{ log.action }}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ log.created_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.82rem; color: var(--text-muted);">{{ log.detail }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px;">
+                        No history logs recorded for this supplier.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

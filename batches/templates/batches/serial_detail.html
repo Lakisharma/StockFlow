@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Serial Inspector - {{ serial.serial_number }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'serial-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Serial Registry</a>
+            </div>
+            <h1 class="page-title">Serial Number Inspector</h1>
+            <div class="page-subtitle">Detailed tracking history, warranty validity, and warehouse assignment for S/N: <span style="font-family: monospace;">{{ serial.serial_number }}</span></div>
+        </div>
+    </div>
+
+    <!-- Inspector Cards Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Left: Item Specifications -->
+        <div class="side-card" style="padding: 24px; display: flex; flex-direction: column; gap: 15px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Item Specifications</h3>
+            
+            <div style="font-size: 0.9rem;">Product: <strong style="color: var(--text-main);">{{ serial.product.name }}</strong></div>
+            <div style="font-size: 0.9rem;">SKU: <strong style="font-family: monospace;">{{ serial.product.sku }}</strong></div>
+            <div style="font-size: 0.9rem;">Current Warehouse: <strong>{{ serial.warehouse.name|default:'N/A' }}</strong></div>
+            <div style="font-size: 0.9rem;">Batch Number: <strong style="font-family: monospace;">{{ serial.batch.batch_number|default:'N/A' }}</strong></div>
+            <div style="font-size: 0.9rem;">Supplier: <strong>{{ serial.supplier.name|default:'N/A' }}</strong></div>
+            <div style="font-size: 0.9rem;">Purchase Invoice: <strong style="font-family: monospace;">{{ serial.purchase_invoice|default:'N/A' }}</strong></div>
+        </div>
+
+        <!-- Right: Warranty & Status -->
+        <div class="side-card" style="padding: 24px; display: flex; flex-direction: column; gap: 15px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Warranty & Assignment Status</h3>
+
+            <div style="font-size: 0.9rem;">Current Status: 
+                <span class="badge" style="padding: 4px 10px; font-weight: 800; background-color: rgba(34, 197, 94, 0.15); color: #16a34a;">
+                    {{ serial.get_status_display }}
+                </span>
+            </div>
+
+            <div style="font-size: 0.9rem;">Warranty Status: 
+                <span class="badge" style="padding: 4px 10px; font-weight: 800; background-color: rgba(59, 130, 246, 0.15); color: #2563eb;">
+                    {{ serial.warranty_status }}
+                </span>
+            </div>
+
+            <div style="font-size: 0.9rem;">Warranty Start: <strong>{{ serial.warranty_start|date:"d M Y"|default:"N/A" }}</strong></div>
+            <div style="font-size: 0.9rem;">Warranty End: <strong>{{ serial.warranty_end|date:"d M Y"|default:"N/A" }}</strong></div>
+            <div style="font-size: 0.9rem;">Registration Date: <strong>{{ serial.created_at|date:"d M Y, H:i" }}</strong></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

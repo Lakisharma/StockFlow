@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Enroll Employee | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'employee-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Employee Directory</a>
+            </div>
+            <h1 class="page-title">Enroll New Employee</h1>
+            <div class="page-subtitle">Add staff profile, department, warehouse, shift, and map to system user account</div>
+        </div>
+    </div>
+
+    <div class="side-card" style="padding: 24px; max-width: 850px;">
+        <form method="POST">
+            {% csrf_token %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Employee Code</label>
+                    <input type="text" class="input-control" value="{{ auto_code }}" readonly style="font-family: monospace; font-weight: 800; background: var(--bg-hover);">
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Full Name</label>
+                    <input type="text" name="full_name" class="input-control" placeholder="e.g. Rahul Kumar" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Phone Number</label>
+                    <input type="text" name="phone" class="input-control" placeholder="+91 99887 76655" required>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Email Address</label>
+                    <input type="email" name="email" class="input-control" placeholder="rahul@company.com">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Joining Date</label>
+                    <input type="date" name="joining_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Date of Birth</label>
+                    <input type="date" name="date_of_birth" class="input-control">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Department</label>
+                    <select name="department" class="input-control">
+                        <option value="">Select Department</option>
+                        {% for d in departments %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Designation</label>
+                    <select name="designation" class="input-control">
+                        <option value="">Select Designation</option>
+                        {% for des in designations %}
+                        <option value="{{ des.id }}">{{ des.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Primary Warehouse</label>
+                    <select name="primary_warehouse" class="input-control">
+                        <option value="">Select Warehouse</option>
+                        {% for w in warehouses %}
+                        <option value="{{ w.id }}">{{ w.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Shift</label>
+                    <select name="shift" class="input-control">
+                        <option value="">Select Shift</option>
+                        {% for s in shifts %}
+                        <option value="{{ s.id }}">{{ s.name }} ({{ s.start_time|time:"H:i" }} - {{ s.end_time|time:"H:i" }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Link to System User Account (Optional)</label>
+                <select name="user" class="input-control">
+                    <option value="">No System Login (Staff / Field Worker Only)</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}">{{ u.get_full_name|default:u.username }} ({{ u.email }})</option>
+                    {% endfor %}
+                </select>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Allows employee to log in using an existing User Account for system permissions.</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Address</label>
+                    <textarea name="address" class="input-control" rows="2" placeholder="Residential address..."></textarea>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 700;">Emergency Contact</label>
+                    <input type="text" name="emergency_contact" class="input-control" placeholder="Contact person name & phone">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <a href="{% url 'employee-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 20px;">Cancel</a>
+                <button type="submit" class="page-actions-btn" style="padding: 10px 24px;">Enroll Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

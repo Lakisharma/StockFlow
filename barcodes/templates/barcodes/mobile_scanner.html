@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mobile Warehouse Scanner | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: 0 auto;">
+    <!-- Mobile Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title" style="display: flex; align-items: center; gap: 10px;">
+                <span class="material-icons-round" style="color: var(--primary-color); font-size: 2.2rem;">qr_code_scanner</span>
+                <span>Mobile Warehouse Scanner</span>
+            </h1>
+            <div class="page-subtitle">Optimized for handheld devices, mobile camera, & USB barcode scanners</div>
+        </div>
+    </div>
+
+    <!-- Active Warehouse & Mode Selector -->
+    <div class="side-card" style="padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">1. SELECT TARGET WAREHOUSE:</label>
+            <select id="warehouseSelect" class="input-control" style="font-weight: 800; max-width: 250px; border-color: var(--primary-color);">
+                {% for w in warehouses %}
+                <option value="{{ w.id }}" {% if selected_warehouse and selected_warehouse.id == w.id %}selected{% endif %}>{{ w.name }} ({{ w.code }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label style="font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: block;">2. SCAN MODE:</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <button type="button" class="btn-demo mode-btn active" data-mode="lookup" onclick="setScanMode('lookup', this)">📦 Product Lookup</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="receiving" onclick="setScanMode('receiving', this)">📥 Goods Receiving</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="stock_in" onclick="setScanMode('stock_in', this)">➕ Stock In</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="stock_out" onclick="setScanMode('stock_out', this)">➖ Stock Out</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="transfer" onclick="setScanMode('transfer', this)">🔄 Stock Transfer</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="stock_count" onclick="setScanMode('stock_count', this)">📋 Stock Count</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="bin_lookup" onclick="setScanMode('bin_lookup', this)">📍 Bin/Location</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="batch_lookup" onclick="setScanMode('batch_lookup', this)">🏷️ Batch Lookup</button>
+                <button type="button" class="btn-demo mode-btn" data-mode="serial_lookup" onclick="setScanMode('serial_lookup', this)">🔢 Serial Lookup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scanner Feed & USB Input Box -->
+    <div class="side-card" style="padding: 24px; text-align: center;">
+        <div id="scanFeedStatus" style="padding: 12px; background: rgba(37, 99, 235, 0.1); border-radius: 8px; font-weight: 800; color: var(--primary-color); margin-bottom: 16px;">
+            READY FOR SCANNER / USB KEYBOARD INPUT
+        </div>
+
+        <form id="scanInputForm" onsubmit="handleManualScan(event)" style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="text" id="barcodeInput" class="input-control" placeholder="Point USB Scanner or type Barcode / SKU / Bin QR..." autofocus autocomplete="off" style="font-size: 1.1rem; font-weight: 800; text-align: center; font-family: monospace;">
+            <button type="submit" class="page-actions-btn" style="padding: 0 24px;">SCAN</button>
+        </form>
+
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+            💡 USB Barcode Scanners automatically submit barcodes when scanned.
+        </div>
+    </div>
+
+    <!-- Live Scan Result Container -->
+    <div id="scanResultBox" class="side-card" style="padding: 20px; display: none;">
+        <h3 id="resultTitle" style="margin-top: 0; color: #16a34a;">Scan Result</h3>
+        <div id="resultBody" style="font-size: 0.95rem; font-weight: 700;"></div>
+    </div>
+
+    <!-- Recent Scans Feed -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 14px;">Recent Scan History</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Barcode</th>
+                    <th>Product</th>
+                    <th>Mode</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in recent_scans %}
+                <tr>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">{{ s.timestamp|date:"H:i:s (d M)" }}</td>
+                    <td style="font-family: monospace; font-weight: 800;">{{ s.barcode_value }}</td>
+                    <td style="font-weight: 700;">{{ s.product.name|default:'-' }}</td>
+                    <td><span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary-color); padding: 3px 8px;">{{ s.get_scan_mode_display }}</span></td>
+                    <td>
+                        <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; {% if s.status == 'found' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                            {{ s.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        No recent scans logged today.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+let currentMode = 'lookup';
+
+function setScanMode(mode, btn) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('barcodeInput').focus();
+}
+
+function playBeep(success=true) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        osc.type = success ? 'sine' : 'sawtooth';
+        osc.frequency.setValueAtTime(success ? 880 : 300, ctx.currentTime);
+        osc.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+    } catch(e) {}
+}
+
+function handleManualScan(e) {
+    e.preventDefault();
+    const barcode = document.getElementById('barcodeInput').value.trim();
+    if (!barcode) return;
+
+    const whId = document.getElementById('warehouseSelect').value;
+
+    fetch('/barcodes/api/operations/scan/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            barcode: barcode,
+            mode: currentMode,
+            warehouse_id: whId,
+            quantity: 1
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const box = document.getElementById('scanResultBox');
+        const title = document.getElementById('resultTitle');
+        const body = document.getElementById('resultBody');
+        box.style.display = 'block';
+
+        if (data.status === 'success') {
+            playBeep(true);
+            title.style.color = '#16a34a';
+            title.innerText = '✅ ' + data.message;
+            body.innerHTML = `<pre style="font-family: monospace; background: var(--bg-hover); padding: 12px; border-radius: 6px;">${JSON.stringify(data, null, 2)}</pre>`;
+        } else {
+            playBeep(false);
+            title.style.color = '#dc2626';
+            title.innerText = '❌ ' + (data.message || 'Scan Failed');
+            body.innerText = data.message || 'Scan operation rejected.';
+        }
+
+        document.getElementById('barcodeInput').value = '';
+        document.getElementById('barcodeInput').focus();
+    })
+    .catch(err => {
+        playBeep(false);
+        console.error(err);
+    });
+}
+</script>
+
+<style>
+.mode-btn.active {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+    font-weight: 800;
+}
+</style>
+{% endblock %}

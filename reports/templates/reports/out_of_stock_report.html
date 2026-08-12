@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Out of Stock Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Out of Stock Alert Report</h1>
+            <div class="page-subtitle">Critical zero-inventory items requiring urgent purchasing</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <a href="{% url 'purchase-add' %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">shopping_cart</span>
+                <span>Create Purchase Order</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Category</th>
+                        <th>Brand</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in out_stocks %}
+                    <tr>
+                        <td><strong>{{ s.product.name }}</strong></td>
+                        <td><code>{{ s.product.sku }}</code></td>
+                        <td>{{ s.product.category.name|default:"-" }}</td>
+                        <td>{{ s.product.brand.name|default:"-" }}</td>
+                        <td>{{ s.warehouse.name }}</td>
+                        <td style="text-align: center;"><span class="badge badge-danger">Out of Stock (0 {{ s.product.unit.short_name }})</span></td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'purchase-add' %}" class="nav-action-btn" title="Create Purchase Order">
+                                <span class="material-icons-round" style="font-size: 18px; color: var(--success-color);">add_shopping_cart</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No out-of-stock items currently!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

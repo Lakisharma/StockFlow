@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notification Center | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Notification & Alert Center</h1>
+            <div class="page-subtitle">Real-time alerts for stock levels, purchases, transfers, OCR scans, backups, and security events</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'notification-preferences' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">tune</span>
+                <span>Alert Preferences</span>
+            </a>
+            <form method="POST" action="{% url 'notification-mark-all-read' %}">
+                {% csrf_token %}
+                <button type="submit" class="page-actions-btn">
+                    <span class="material-icons-round">done_all</span>
+                    <span>Mark All as Read</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <div class="side-card" style="padding: 18px;">
+        <form method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 12px; align-items: center;">
+            <input type="text" name="search" class="input-control" placeholder="Search notification title or message..." value="{{ search|default:'' }}">
+
+            <select name="status" class="input-control" onchange="this.form.submit()">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+                <option value="unread" {% if status_filter == 'unread' %}selected{% endif %}>Unread Only ({{ summary.unread_count }})</option>
+                <option value="read" {% if status_filter == 'read' %}selected{% endif %}>Read Only</option>
+            </select>
+
+            <select name="priority" class="input-control" onchange="this.form.submit()">
+                <option value="">All Priorities</option>
+                <option value="critical" {% if priority_filter == 'critical' %}selected{% endif %}>Critical</option>
+                <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>High</option>
+                <option value="normal" {% if priority_filter == 'normal' %}selected{% endif %}>Normal</option>
+                <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Low</option>
+            </select>
+
+            <select name="module" class="input-control" onchange="this.form.submit()">
+                <option value="">All Modules</option>
+                <option value="Inventory" {% if module_filter == 'Inventory' %}selected{% endif %}>Inventory Stock</option>
+                <option value="Purchases" {% if module_filter == 'Purchases' %}selected{% endif %}>Purchases</option>
+                <option value="Stock Transfer" {% if module_filter == 'Stock Transfer' %}selected{% endif %}>Stock Transfers</option>
+                <option value="OCR" {% if module_filter == 'OCR' %}selected{% endif %}>AI OCR Scanner</option>
+                <option value="Backup & Restore" {% if module_filter == 'Backup & Restore' %}selected{% endif %}>Backups</option>
+                <option value="Security" {% if module_filter == 'Security' %}selected{% endif %}>Security</option>
+            </select>
+
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="page-actions-btn" style="padding: 8px 16px; font-size: 0.85rem;">Filter</button>
+                <a href="{% url 'notification-center' %}" class="btn-demo" style="text-decoration: none; padding: 8px 12px; font-size: 0.85rem;">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notification Cards List -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for n in page_obj %}
+        <div class="side-card" style="padding: 18px; border-left: 5px solid {% if n.priority == 'critical' %}#ef4444{% elif n.priority == 'high' %}#f59e0b{% elif n.priority == 'normal' %}#3b82f6{% else %}#9ca3af{% endif %}; {% if not n.is_read %}background-color: var(--bg-card);{% else %}opacity: 0.85;{% endif %}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; uppercase; font-weight: 800; {% if n.priority == 'critical' %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% elif n.priority == 'high' %}background-color: rgba(245, 158, 11, 0.15); color: #d97706;{% else %}background-color: rgba(59, 130, 246, 0.15); color: #2563eb;{% endif %}">
+                        {{ n.get_priority_display }}
+                    </span>
+                    <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">
+                        {{ n.title }}
+                    </span>
+                    {% if not n.is_read %}
+                    <span class="badge" style="background-color: var(--primary-color); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 10px;">NEW</span>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">{{ n.created_at|date:"d M Y, H:i" }}</span>
+                    
+                    {% if not n.is_read %}
+                    <form method="POST" action="{% url 'notification-mark-read' n.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-demo" style="padding: 4px 8px; font-size: 0.75rem;" title="Mark as Read">
+                            <span class="material-icons-round" style="font-size: 16px;">done</span>
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'notification-delete' n.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-demo" style="padding: 4px 8px; font-size: 0.75rem; color: #dc2626;" title="Delete Notification">
+                            <span class="material-icons-round" style="font-size: 16px;">close</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 12px;">
+                {{ n.message }}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted);">
+                <div>Module: <strong style="color: var(--text-main);">{{ n.module }}</strong></div>
+                {% if n.action_url %}
+                <a href="{{ n.action_url }}" class="btn-demo" style="text-decoration: none; padding: 5px 12px; font-weight: 700; color: var(--primary-color);">
+                    View Affected Record &rarr;
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="side-card" style="padding: 40px; text-align: center; color: var(--text-muted);">
+            No notification alerts match the selected filter criteria.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 0.85rem;">
+        <div style="color: var(--text-muted);">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} alerts
+        </div>
+        <div style="display: flex; gap: 6px;">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&search={{ search }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px;">&laquo; Prev</a>
+            {% endif %}
+            <span class="btn-demo" style="padding: 6px 12px; background-color: var(--primary-color); color: #fff;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&search={{ search }}" class="btn-demo" style="text-decoration: none; padding: 6px 12px;">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

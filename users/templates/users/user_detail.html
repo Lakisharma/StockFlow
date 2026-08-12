@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Profile: {{ user_obj.username }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">User Account Overview</h1>
+            <div class="page-subtitle">Detailed account profile, role permissions summary, and activity audit timeline</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'user-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to List</a>
+            <a href="{% url 'user-edit' user_obj.id %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px;">Edit Profile</a>
+        </div>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="side-card" style="padding: 25px;">
+        <div style="display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background-color: var(--primary-color); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.6rem;">
+                {{ user_obj.first_name|default:user_obj.username|slice:":1"|upper }}
+            </div>
+            <div>
+                <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px;">{{ user_obj.get_full_name|default:user_obj.username }}</h2>
+                <div style="color: var(--text-muted); font-size: 0.88rem;">@{{ user_obj.username }} &bull; {{ user_obj.email|default:"No Email" }}</div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <span class="badge badge-info">{{ profile.role.name|default:"No Role" }}</span>
+                    {% if profile.status == 'active' and user_obj.is_active %}
+                        <span class="badge badge-success">Active</span>
+                    {% else %}
+                        <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.88rem;">
+            <div>Phone: <strong>{{ profile.phone|default:"Not Provided" }}</strong></div>
+            <div>Member Since: <strong>{{ user_obj.date_joined|date:"M d, Y" }}</strong></div>
+            <div>Last Login: <strong>{{ user_obj.last_login|date:"M d, Y H:i"|default:"Never" }}</strong></div>
+            <div>Warehouse Access: <strong>{{ profile.get_warehouse_access_type_display }}</strong></div>
+        </div>
+    </div>
+
+    <!-- Admin Reset Password Section -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Admin Password Reset</h3>
+        <form method="POST" action="{% url 'user-reset-password' user_obj.id %}" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            {% csrf_token %}
+            <div class="form-group" style="margin: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">New Password</label>
+                <input type="password" name="new_password" class="input-control" required placeholder="Min 6 characters">
+            </div>
+            <div class="form-group" style="margin: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" name="confirm_password" class="input-control" required placeholder="Repeat password">
+            </div>
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Reset Password</button>
+        </form>
+    </div>
+
+    <!-- Activity Audit Log Timeline -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Recent User Activity Log
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for log in activity_logs %}
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; font-size: 0.85rem;">
+                <div>
+                    <strong style="color: var(--primary-color);">[{{ log.module }}]</strong> {{ log.action }}
+                    {% if log.reference %}<code style="font-size: 0.78rem; margin-left: 5px;">#{{ log.reference }}</code>{% endif %}
+                </div>
+                <div style="color: var(--text-muted); font-size: 0.8rem;">
+                    {{ log.timestamp|date:"M d, Y H:i" }} {% if log.ip_address %}({{ log.ip_address }}){% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="color: var(--text-muted); padding: 15px 0;">No activity recorded for this user yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

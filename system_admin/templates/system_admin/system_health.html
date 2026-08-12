@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}System Health & Service Diagnostics | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'admin-control-center' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Admin Control Center</a>
+            </div>
+            <h1 class="page-title">System Health & Service Diagnostics</h1>
+            <div class="page-subtitle">Real-time health status of database connection, file storage, system backups, and audit logging</div>
+        </div>
+    </div>
+
+    <!-- Health Table -->
+    <div class="side-card" style="padding: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Component Name</th>
+                    <th>Status</th>
+                    <th>Diagnostic Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, item in health.items %}
+                <tr>
+                    <td style="font-weight: 800; text-transform: uppercase;">{{ key }}</td>
+                    <td>
+                        <span class="badge" style="padding: 4px 10px; font-weight: 800; {% if item.status == 'healthy' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% else %}background-color: rgba(239, 68, 68, 0.15); color: #dc2626;{% endif %}">
+                            {{ item.status|upper }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 700;">{{ item.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

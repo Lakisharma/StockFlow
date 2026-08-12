@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SO {{ so.so_number }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'so-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Sales Orders</a>
+            </div>
+            <h1 class="page-title">Sales Order Inspector: <span style="font-family: monospace;">{{ so.so_number }}</span></h1>
+            <div class="page-subtitle">Order status timeline, customer credit limits, and picking/dispatch progress</div>
+        </div>
+        <div class="page-actions" style="display: flex; gap: 10px;">
+            <a href="{% url 'so-print' so.id %}" target="_blank" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">print</span>
+                <span>Print SO</span>
+            </a>
+            {% if so.status == 'approved' %}
+            <a href="{% url 'picking-create' %}?so={{ so.id }}" class="page-actions-btn" style="text-decoration: none; padding: 10px 18px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">inventory_2</span>
+                <span>+ Start Picking</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stock Warnings Banner if any -->
+    {% if item_stock_warnings %}
+    <div class="side-card" style="padding: 16px; background-color: rgba(245, 158, 11, 0.1); border-left: 5px solid #d97706;">
+        <h4 style="margin: 0 0 6px 0; color: #d97706; font-size: 0.95rem; font-weight: 800;">INVENTORY AVAILABILITY WARNINGS</h4>
+        {% for w in item_stock_warnings %}
+        <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 700;">&bull; {{ w }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Status & Actions Card -->
+    <div class="side-card" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">FULFILLMENT STATUS</div>
+            <div style="margin-top: 4px;">
+                <span class="badge" style="padding: 6px 14px; font-size: 0.9rem; font-weight: 800; {% if so.status == 'approved' or so.status == 'ready_for_dispatch' %}background-color: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif so.status == 'pending_approval' %}background-color: rgba(245, 158, 11, 0.15); color: #d97706;{% elif so.status == 'dispatched' or so.status == 'completed' %}background-color: rgba(59, 130, 246, 0.15); color: #2563eb;{% else %}background-color: rgba(156, 163, 175, 0.15); color: #4b5563;{% endif %}">
+                    {{ so.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        {% if so.status == 'draft' %}
+        <form method="POST" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit">
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Submit for Approval</button>
+        </form>
+        {% elif so.status == 'pending_approval' %}
+        <form method="POST" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="approve">
+            <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Approve Order</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Customer & Warehouse Info Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Customer Profile</h3>
+            <div style="font-size: 0.9rem;">Customer Name: <strong style="color: var(--text-main);">{{ so.customer.name }}</strong></div>
+            <div style="font-size: 0.9rem;">GSTIN: <strong>{{ so.customer.gstin|default:'N/A' }}</strong></div>
+            <div style="font-size: 0.9rem;">Credit Limit: <strong>₹{{ so.customer.credit_limit|floatformat:2 }}</strong></div>
+            <div style="font-size: 0.9rem;">Outstanding Balance: <strong style="color: #d97706;">₹{{ so.customer.outstanding_amount|floatformat:2 }}</strong></div>
+        </div>
+
+        <div class="side-card" style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Fulfillment Info</h3>
+            <div style="font-size: 0.9rem;">Fulfillment Warehouse: <strong style="color: var(--text-main);">{{ so.warehouse.name }}</strong></div>
+            <div style="font-size: 0.9rem;">Order Date: <strong>{{ so.order_date|date:"d M Y" }}</strong></div>
+            <div style="font-size: 0.9rem;">Expected Dispatch: <strong>{{ so.expected_dispatch_date|date:"d M Y"|default:"N/A" }}</strong></div>
+            <div style="font-size: 0.9rem;">Payment Terms: <strong>{{ so.payment_terms }}</strong></div>
+        </div>
+    </div>
+
+    <!-- Ordered Items Table -->
+    <div class="side-card" style="padding: 20px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Itemized Fulfillment Progress</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Ordered Qty</th>
+                    <th>Picked Qty</th>
+                    <th>Dispatched Qty</th>
+                    <th>Selling Rate (₹)</th>
+                    <th>Line Total (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in so.items.all %}
+                <tr>
+                    <td style="font-weight: 700; color: var(--text-main);">
+                        {{ item.product.name }}
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">SKU: {{ item.product.sku }}</div>
+                    </td>
+                    <td style="font-weight: 800;">{{ item.ordered_quantity }}</td>
+                    <td style="color: #d97706; font-weight: 700;">{{ item.picked_quantity }}</td>
+                    <td style="color: #16a34a; font-weight: 800;">{{ item.dispatched_quantity }}</td>
+                    <td>₹{{ item.rate|floatformat:2 }}</td>
+                    <td style="font-weight: 800;">₹{{ item.line_total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Product Performance Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Product Performance & Metrics Report</h1>
+            <div class="page-subtitle">Product purchase volume, total current stock, and warehouse distribution</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 16px;">Print</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Product Details</th>
+                        <th>Category</th>
+                        <th>Brand</th>
+                        <th style="text-align: center;">Total Stock</th>
+                        <th style="text-align: center;">Purchased Qty</th>
+                        <th style="text-align: right;">Total Purchased Amt</th>
+                        <th style="text-align: center;">Locations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'product-detail' p.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">{{ p.name }}</a>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: <code>{{ p.sku }}</code></div>
+                        </td>
+                        <td>{{ p.category.name|default:"-" }}</td>
+                        <td>{{ p.brand.name|default:"-" }}</td>
+                        <td style="text-align: center; font-weight: 700;">{{ p.current_stock }} {{ p.unit.short_name }}</td>
+                        <td style="text-align: center;">{{ p.total_purchased_qty|default:0 }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--primary-color);">₹ {{ p.total_purchased_amt|default:"0.00"|floatformat:2 }}</td>
+                        <td style="text-align: center;">{{ p.warehouse_count }} Godowns</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No product performance records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

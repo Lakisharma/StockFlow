@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inventory Valuation Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Inventory Valuation Report</h1>
+            <div class="page-subtitle">Real-time asset valuation calculated as <code>Current Quantity &times; Purchase Price</code></div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 16px;">Print</button>
+        </div>
+    </div>
+
+    <!-- Total Valuation Hero Card -->
+    <div class="side-card" style="padding: 25px; border-left: 4px solid var(--success-color);">
+        <div style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">Total Company Inventory Asset Valuation</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--success-color); margin-top: 5px;">₹ {{ total_valuation|floatformat:2 }}</div>
+    </div>
+
+    <!-- Warehouse & Category Breakdowns -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="side-card" style="padding: 20px;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">Warehouse-wise Asset Valuation</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                {% for name, val in warehouse_breakdown.items %}
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 6px;">
+                    <span>{{ name }}</span>
+                    <strong style="color: var(--success-color);">₹ {{ val|floatformat:2 }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="side-card" style="padding: 20px;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">Category-wise Asset Valuation</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                {% for name, val in category_breakdown.items %}
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 6px;">
+                    <span>{{ name }}</span>
+                    <strong style="color: var(--primary-color);">₹ {{ val|floatformat:2 }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Product Details</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Current Qty</th>
+                        <th style="text-align: right;">Purchase Cost Price</th>
+                        <th style="text-align: right;">Inventory Valuation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in stocks %}
+                    <tr>
+                        <td>
+                            <strong>{{ s.product.name }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: <code>{{ s.product.sku }}</code></div>
+                        </td>
+                        <td>{{ s.warehouse.name }}</td>
+                        <td style="text-align: center; font-weight: 700;">{{ s.quantity }} {{ s.product.unit.short_name }}</td>
+                        <td style="text-align: right;">₹ {{ s.product.purchase_price }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--success-color);">₹ {{ s.inventory_value|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">No inventory valuation records.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

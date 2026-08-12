@@ -1,0 +1,9 @@
+[tool.pyright]
+exclude = [
+    "**/_pyrefly_virtual_/**",
+    "C:/_pyrefly_virtual_/**",
+    "**/scratch/**"
+]
+ignore = [
+    "**/_pyrefly_virtual_/**"
+]

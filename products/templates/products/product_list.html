@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Product Management | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="product-list-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Product Management</h1>
+            <div class="page-subtitle">Track and configure enterprise product profiles and inventory metrics</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'product-add' %}" class="page-actions-btn" style="text-decoration: none;">
+                <span class="material-icons-round">add</span>
+                <span>Add Product</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="side-card" style="margin-bottom: 25px; padding: 20px;">
+        <form method="GET" class="row g-3 align-items-center" id="filterForm" style="display: flex; flex-wrap: wrap; gap: 12px; width: 100%;">
+            <!-- Search -->
+            <div class="nav-search-bar" style="width: 250px; max-width: 100%;">
+                <span class="material-icons-round nav-search-icon">search</span>
+                <input class="nav-search-input" type="text" name="q" value="{{ q }}" placeholder="Search by name, SKU, category...">
+            </div>
+
+            <!-- Category Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="catFilter">Category:</label>
+                <select name="category" id="catFilter" class="input-control" style="width: 130px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Brand Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="brandFilter">Brand:</label>
+                <select name="brand" id="brandFilter" class="input-control" style="width: 120px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all">All Brands</option>
+                    {% for brand in brands %}
+                    <option value="{{ brand.id }}" {% if selected_brand == brand.id|stringformat:"i" %}selected{% endif %}>{{ brand.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Unit Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="unitFilter">Unit:</label>
+                <select name="unit" id="unitFilter" class="input-control" style="width: 110px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all">All Units</option>
+                    {% for unit in units %}
+                    <option value="{{ unit.id }}" {% if selected_unit == unit.id|stringformat:"i" %}selected{% endif %}>{{ unit.short_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Stock Status Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="stockFilter">Stock:</label>
+                <select name="stock_status" id="stockFilter" class="input-control" style="width: 130px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all" {% if selected_stock_status == 'all' %}selected{% endif %}>All Stock</option>
+                    <option value="in_stock" {% if selected_stock_status == 'in_stock' %}selected{% endif %}>In Stock</option>
+                    <option value="low_stock" {% if selected_stock_status == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                    <option value="out_of_stock" {% if selected_stock_status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                </select>
+            </div>
+
+            <!-- Active / Inactive Filter -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" for="statusFilter">Status:</label>
+                <select name="status" id="statusFilter" class="input-control" style="width: 100px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                    <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+
+            <!-- Export, Import & Refresh Buttons -->
+            <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
+                <a href="{% url 'product-list' %}" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-icons-round" style="font-size: 16px;">refresh</span>
+                    <span>Refresh</span>
+                </a>
+                <button type="button" class="btn-demo" style="padding: 6px 12px; font-size: 0.82rem; display: flex; align-items: center; gap: 4px;" onclick="alert('Import UI triggered. Drag & Drop or select CSV file to parse.')">
+                    <span class="material-icons-round" style="font-size: 16px;">file_upload</span>
+                    <span>Import</span>
+                </button>
+                <a href="?q={{ q }}&category={{ selected_category }}&brand={{ selected_brand }}&unit={{ selected_unit }}&status={{ selected_status }}&stock_status={{ selected_stock_status }}&sort={{ sort }}&export=csv" class="btn-demo" style="text-decoration: none; padding: 6px 12px; font-size: 0.82rem; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-icons-round" style="font-size: 16px;">download</span>
+                    <span>CSV</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Action Info Bar -->
+    <div id="bulkActionBar" class="alert-item alert-warning" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round alert-item-icon">check_box</span>
+            <span class="alert-message" id="bulkActionCountText">0 products selected</span>
+        </div>
+        <form method="POST" action="{% url 'product-bulk-action' %}" id="bulkActionForm" style="display: flex; gap: 10px; align-items: center;">
+            {% csrf_token %}
+            <div id="bulkIdsContainer"></div>
+            
+            <select name="action" class="input-control" style="padding: 6px 12px; font-size: 0.82rem; width: 140px; background-color: var(--bg-main);">
+                <option value="deactivate">Deactivate Selected</option>
+                <option value="activate">Activate Selected</option>
+                <option value="delete">Delete Permanently</option>
+            </select>
+            
+            <button type="submit" class="page-actions-btn" style="padding: 6px 12px; font-size: 0.82rem;">
+                <span class="material-icons-round" style="font-size: 16px;">play_arrow</span>
+                <span>Apply Action</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="custom-table" id="productTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" id="selectAllCheckbox" style="cursor: pointer; width: 16px; height: 16px;">
+                        </th>
+                        <th>Image</th>
+                        <th>Product Details</th>
+                        <th>SKU / Barcode</th>
+                        <th>Category</th>
+                        <th>Brand</th>
+                        <th>Unit</th>
+                        <th>Prices (Buy/Sell)</th>
+                        <th>GST</th>
+                        <th>Stock Level</th>
+                        <th>Stock Status</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod in products %}
+                    <tr>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <input type="checkbox" class="product-row-checkbox" value="{{ prod.id }}" style="cursor: pointer; width: 15px; height: 15px;">
+                        </td>
+                        <td style="vertical-align: middle;">
+                            {% if prod.image %}
+                                <img src="{{ prod.image.url }}" alt="{{ prod.name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);">
+                            {% else %}
+                                <div class="icon-primary" style="width: 50px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="material-icons-round" style="font-size: 24px;">inventory_2</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td style="vertical-align: middle;">
+                            <a href="{% url 'product-detail' prod.id %}" style="color: var(--primary-color); font-weight: 600; text-decoration: none; display: block; font-size: 0.95rem;">
+                                {{ prod.name }}
+                            </a>
+                            <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 2px;">
+                                Code: {{ prod.product_code|default:"-" }}
+                            </span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                            <code style="font-size: 0.82rem; display: block; margin-bottom: 2px;">SKU: {{ prod.sku }}</code>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                                <span class="material-icons-round" style="font-size: 14px;">qr_code_2</span>
+                                {{ prod.barcode|default:"-" }}
+                            </span>
+                        </td>
+                        <td style="vertical-align: middle; font-size: 0.88rem;">{{ prod.category.name }}</td>
+                        <td style="vertical-align: middle; font-size: 0.88rem;">{{ prod.brand.name|default:"-" }}</td>
+                        <td style="vertical-align: middle; font-size: 0.88rem;"><code>{{ prod.unit.short_name }}</code></td>
+                        <td style="vertical-align: middle;">
+                            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Sell: ${{ prod.selling_price }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Buy: ${{ prod.purchase_price }}</div>
+                        </td>
+                        <td style="vertical-align: middle; font-size: 0.85rem;">{{ prod.gst_rate }}%</td>
+                        <td style="vertical-align: middle;">
+                            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">{{ prod.current_stock }}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Min: {{ prod.min_stock_level }}</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                            {% if prod.stock_status == 'In Stock' %}
+                                <span class="badge badge-success" style="padding: 4px 8px; font-size: 0.72rem;">
+                                    <span class="badge-dot" style="background-color: var(--success-color);"></span>
+                                    In Stock
+                                </span>
+                            {% elif prod.stock_status == 'Low Stock' %}
+                                <span class="badge badge-danger" style="background-color: var(--warning-light); color: var(--warning-color); padding: 4px 8px; font-size: 0.72rem;">
+                                    <span class="badge-dot" style="background-color: var(--warning-color);"></span>
+                                    Low Stock
+                                </span>
+                            {% else %}
+                                <span class="badge badge-danger" style="padding: 4px 8px; font-size: 0.72rem;">
+                                    <span class="badge-dot" style="background-color: var(--danger-color);"></span>
+                                    Out of Stock
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td style="vertical-align: middle;">
+                            {% if prod.status == 'active' %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="vertical-align: middle;">
+                            <div style="display: flex; gap: 6px;">
+                                <a href="{% url 'product-detail' prod.id %}" class="nav-action-btn" title="View details" style="width: 30px; height: 30px;">
+                                    <span class="material-icons-round" style="font-size: 16px;">visibility</span>
+                                </a>
+                                <a href="{% url 'product-edit' prod.id %}" class="nav-action-btn" title="Edit product" style="width: 30px; height: 30px; color: var(--warning-color);">
+                                    <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                                </a>
+                                <a href="{% url 'product-delete' prod.id %}" class="nav-action-btn" title="Delete / Deactivate" style="width: 30px; height: 30px; color: var(--danger-color);">
+                                    <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="13" style="text-align: center; padding: 50px 20px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; margin-bottom: 12px; display: block;">inventory_2</span>
+                            No products found matching your search options.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Section -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; flex-wrap: wrap; gap: 15px;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+            <div style="display: flex; gap: 8px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&category={{ selected_category }}&brand={{ selected_brand }}&unit={{ selected_unit }}&status={{ selected_status }}&stock_status={{ selected_stock_status }}&sort={{ sort }}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                        <span class="material-icons-round" style="font-size: 18px;">chevron_left</span>
+                        <span>Previous</span>
+                    </a>
+                {% endif %}
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&category={{ selected_category }}&brand={{ selected_brand }}&unit={{ selected_unit }}&status={{ selected_status }}&stock_status={{ selected_stock_status }}&sort={{ sort }}" class="btn-demo" style="text-decoration: none; padding: 8px 14px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                        <span>Next</span>
+                        <span class="material-icons-round" style="font-size: 18px;">chevron_right</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const rowCheckboxes = document.querySelectorAll('.product-row-checkbox');
+        const bulkActionBar = document.getElementById('bulkActionBar');
+        const bulkActionCountText = document.getElementById('bulkActionCountText');
+        const bulkIdsContainer = document.getElementById('bulkIdsContainer');
+
+        function updateBulkBar() {
+            const checkedBoxes = document.querySelectorAll('.product-row-checkbox:checked');
+            const count = checkedBoxes.length;
+            
+            if (count > 0) {
+                bulkActionBar.style.display = 'flex';
+                bulkActionCountText.textContent = `${count} product${count > 1 ? 's' : ''} selected`;
+                
+                bulkIdsContainer.innerHTML = '';
+                checkedBoxes.forEach(checkbox => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'ids';
+                    hiddenInput.value = checkbox.value;
+                    bulkIdsContainer.appendChild(hiddenInput);
+                });
+            } else {
+                bulkActionBar.style.display = 'none';
+                bulkIdsContainer.innerHTML = '';
+            }
+        }
+
+        selectAllCheckbox.addEventListener('change', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            updateBulkBar();
+        });
+
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (!this.checked) {
+                    selectAllCheckbox.checked = false;
+                } else {
+                    const allChecked = Array.from(rowCheckboxes).every(box => box.checked);
+                    selectAllCheckbox.checked = allChecked;
+                }
+                updateBulkBar();
+            });
+        });
+    });
+</script>
+{% endblock %}

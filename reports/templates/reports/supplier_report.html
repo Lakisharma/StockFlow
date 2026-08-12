@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supplier Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Supplier Performance & Balance Report</h1>
+            <div class="page-subtitle">Supplier purchase totals, paid amounts, and outstanding balances</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 16px;">Print</button>
+        </div>
+    </div>
+
+    <!-- Highlights Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+        <div class="side-card" style="padding: 20px; border-left: 4px solid var(--primary-color);">
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Top Volume Supplier</div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 5px;">{{ top_supplier.name|default:"N/A" }}</div>
+            <div style="font-size: 0.85rem; color: var(--primary-color); font-weight: 700; margin-top: 2px;">Total: ₹ {{ top_supplier.total_purchase_amount|default:"0.00"|floatformat:2 }}</div>
+        </div>
+
+        <div class="side-card" style="padding: 20px; border-left: 4px solid var(--danger-color);">
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Highest Outstanding Balance</div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-top: 5px;">{{ highest_outstanding.name|default:"N/A" }}</div>
+            <div style="font-size: 0.85rem; color: var(--danger-color); font-weight: 700; margin-top: 2px;">Pending: ₹ {{ highest_outstanding.total_pending_amount|default:"0.00"|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Supplier</th>
+                        <th>Code</th>
+                        <th style="text-align: center;">Total Bills</th>
+                        <th style="text-align: right;">Total Purchased</th>
+                        <th style="text-align: right;">Paid Amount</th>
+                        <th style="text-align: right;">Pending Balance</th>
+                        <th style="text-align: center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in suppliers %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'supplier-detail' s.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">{{ s.name }}</a>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ s.company_name|default:"" }}</div>
+                        </td>
+                        <td><code>{{ s.code }}</code></td>
+                        <td style="text-align: center;">{{ s.total_purchase_count }}</td>
+                        <td style="text-align: right; font-weight: 700;">₹ {{ s.total_purchase_amount|default:"0.00"|floatformat:2 }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--success-color);">₹ {{ s.total_paid_amount|default:"0.00"|floatformat:2 }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--danger-color);">₹ {{ s.total_pending_amount|default:"0.00"|floatformat:2 }}</td>
+                        <td style="text-align: center;">
+                            <span class="badge badge-success">{{ s.get_status_display }}</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">No supplier records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

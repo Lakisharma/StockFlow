@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Receive Goods (GRN) | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+                <a href="{% url 'grn-list' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to GRN Registry</a>
+            </div>
+            <h1 class="page-title">Create Goods Receipt Note (GRN)</h1>
+            <div class="page-subtitle">Inspect received shipments, record accepted/damaged quantities, and capture batch/expiry/serial information</div>
+        </div>
+    </div>
+
+    <form method="POST" id="grnForm">
+        {% csrf_token %}
+        <input type="hidden" name="action_type" id="grnActionType" value="draft">
+
+        <!-- Form Top Card -->
+        <div class="side-card" style="padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 20px;">
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">GRN Number</label>
+                <input type="text" name="grn_number" class="input-control" value="{{ auto_grn_number }}" required style="font-family: monospace; font-weight: 800;">
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Linked Purchase Order</label>
+                <select name="purchase_order" class="input-control" onchange="if(this.value) window.location.href='?po='+this.value">
+                    <option value="">Direct Receipt (No PO)</option>
+                    {% for p in approved_pos %}
+                    <option value="{{ p.id }}" {% if po and po.id == p.id %}selected{% endif %}>{{ p.po_number }} - {{ p.supplier.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Supplier</label>
+                <select name="supplier" class="input-control" required>
+                    <option value="">Select Supplier</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}" {% if po and po.supplier.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Receiving Warehouse</label>
+                <select name="warehouse" class="input-control" required>
+                    <option value="">Select Warehouse</option>
+                    {% for w in warehouses %}
+                    <option value="{{ w.id }}" {% if po and po.warehouse.id == w.id %}selected{% endif %}>{{ w.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Received Date</label>
+                <input type="date" name="received_date" class="input-control" value="{% now 'Y-m-d' %}" required>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: 700;">Delivery Challan / Invoice No</label>
+                <input type="text" name="challan_number" class="input-control" placeholder="e.g. CH-99021">
+            </div>
+        </div>
+
+        <!-- Items Inspection & Receiving Card -->
+        <div class="side-card" style="padding: 24px; margin-bottom: 20px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px;">Item Receiving & Inspection Table</h3>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Product</th>
+                        <th style="width: 10%;">Ordered</th>
+                        <th style="width: 10%;">Received</th>
+                        <th style="width: 10%;">Accepted</th>
+                        <th style="width: 10%;">Damaged</th>
+                        <th style="width: 15%;">Batch No</th>
+                        <th style="width: 20%;">Expiry Date / Serials</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if po %}
+                        {% for item in po.items.all %}
+                        <tr>
+                            <input type="hidden" name="po_item_id[]" value="{{ item.id }}">
+                            <input type="hidden" name="product_id[]" value="{{ item.product.id }}">
+                            <td style="font-weight: 700; color: var(--text-main);">
+                                {{ item.product.name }}
+                                <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">SKU: {{ item.product.sku }}</div>
+                            </td>
+                            <td style="font-weight: 800;">{{ item.quantity }}</td>
+                            <td><input type="number" name="received_qty[]" class="input-control" value="{{ item.quantity }}" min="0" required></td>
+                            <td><input type="number" name="accepted_qty[]" class="input-control" value="{{ item.quantity }}" min="0" required></td>
+                            <td><input type="number" name="damaged_qty[]" class="input-control" value="0" min="0"></td>
+                            <td><input type="text" name="batch_number[]" class="input-control" placeholder="BATCH-001" style="font-family: monospace;"></td>
+                            <td>
+                                <input type="date" name="expiry_date[]" class="input-control" style="margin-bottom: 4px;">
+                                <input type="text" name="serials[]" class="input-control" placeholder="Comma separated serials..." style="font-size: 0.75rem;">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                Select a Purchase Order above to auto-populate ordered items.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Submit Controls -->
+        <div class="side-card" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1; margin-right: 20px;">
+                <label style="font-size: 0.85rem; font-weight: 700;">Inspection Notes</label>
+                <input type="text" name="inspection_notes" class="input-control" placeholder="Physical condition verification notes...">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" onclick="document.getElementById('grnActionType').value='draft'" class="btn-demo" style="padding: 12px 20px;">Save Draft GRN</button>
+                <button type="submit" onclick="document.getElementById('grnActionType').value='confirm'" class="page-actions-btn" style="padding: 12px 24px;">Confirm GRN & Update Inventory</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

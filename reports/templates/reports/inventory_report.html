@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inventory Report | StockFlow AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Inventory Report</h1>
+            <div class="page-subtitle">Multi-warehouse stock levels, status, and valuation breakdown</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'reports-dashboard' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px;">Back to Dashboard</a>
+            <a href="{% url 'report-export-csv' 'inventory' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-icons-round">download</span>
+                <span>Export CSV</span>
+            </a>
+            <button onclick="window.print()" class="page-actions-btn" style="padding: 10px 16px;">Print</button>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="side-card" style="padding: 20px;">
+        <form method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label">Warehouse</label>
+                <select name="warehouse" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Warehouses</option>
+                    {% for wh in warehouses %}
+                        <option value="{{ wh.id }}" {% if selected_wh == wh.id|stringformat:"i" %}selected{% endif %}>{{ wh.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label">Category</label>
+                <select name="category" class="input-control" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_cat == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="page-actions-btn" style="padding: 10px 16px; flex: 1;">Apply Filter</button>
+                <a href="{% url 'report-inventory' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; justify-content: center;">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Product Details</th>
+                        <th>Category</th>
+                        <th>Brand</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Current Stock</th>
+                        <th style="text-align: right;">Unit Price</th>
+                        <th style="text-align: right;">Valuation</th>
+                        <th style="text-align: center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in stocks %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'inventory-detail' s.product.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">{{ s.product.name }}</a>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: <code>{{ s.product.sku }}</code></div>
+                        </td>
+                        <td>{{ s.product.category.name|default:"-" }}</td>
+                        <td>{{ s.product.brand.name|default:"-" }}</td>
+                        <td><strong>{{ s.warehouse.name }}</strong></td>
+                        <td style="text-align: center; font-weight: 700;">{{ s.quantity }} {{ s.product.unit.short_name }}</td>
+                        <td style="text-align: right;">₹ {{ s.product.purchase_price }}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--success-color);">₹ {{ s.inventory_value|floatformat:2 }}</td>
+                        <td style="text-align: center;">
+                            {% if s.quantity == 0 %}
+                                <span class="badge badge-danger">Out of Stock</span>
+                            {% elif s.quantity <= s.min_stock_level %}
+                                <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Low Stock</span>
+                            {% else %}
+                                <span class="badge badge-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">No inventory records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

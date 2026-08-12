@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transfer Manifest: {{ transfer.transfer_number }} | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="transfer-detail-content" style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title">Transfer #{{ transfer.transfer_number }}</h1>
+            <div class="page-subtitle">
+                From <strong>{{ transfer.from_warehouse.name }}</strong> &rarr; To <strong>{{ transfer.to_warehouse.name }}</strong>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'transfer-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">arrow_back</span>
+                <span>Back to List</span>
+            </a>
+            <a href="{% url 'transfer-print' transfer.id %}" target="_blank" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-round">print</span>
+                <span>Print Manifest</span>
+            </a>
+
+            <!-- Action Buttons based on Status Workflow -->
+            {% if transfer.status == 'draft' or transfer.status == 'requested' %}
+                <a href="{% url 'transfer-approve' transfer.id %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; background-color: var(--primary-color);">
+                    <span class="material-icons-round">check_circle</span>
+                    <span>Approve Transfer</span>
+                </a>
+            {% endif %}
+
+            {% if transfer.status == 'approved' or transfer.status == 'requested' %}
+                <a href="{% url 'transfer-transit' transfer.id %}" class="page-actions-btn" style="text-decoration: none; padding: 10px 16px; background-color: var(--warning-color);">
+                    <span class="material-icons-round" style="color: #ffffff;">local_shipping</span>
+                    <span style="color: #ffffff;">Start Transit</span>
+                </a>
+            {% endif %}
+
+            {% if transfer.status == 'in_transit' or transfer.status == 'approved' or transfer.status == 'partially_received' %}
+                <button type="button" class="page-actions-btn" style="padding: 10px 16px; background-color: var(--success-color);" onclick="document.getElementById('receiveModal').style.display='block'">
+                    <span class="material-icons-round">move_to_inbox</span>
+                    <span>Receive Items</span>
+                </button>
+            {% endif %}
+
+            {% if transfer.status == 'draft' or transfer.status == 'requested' %}
+                <button type="button" class="btn-demo" style="padding: 10px 16px; color: var(--danger-color); border-color: var(--danger-color);" onclick="document.getElementById('rejectModal').style.display='block'">
+                    <span class="material-icons-round" style="font-size: 18px;">cancel</span>
+                    <span>Reject Request</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Status Workflow Progress Bar Card -->
+    <div class="side-card" style="padding: 25px;">
+        <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 20px;">
+            Transfer Workflow Pipeline
+        </h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+            <!-- Connector Line -->
+            <div style="position: absolute; top: 18px; left: 0; right: 0; height: 3px; background-color: var(--border-color); z-index: 1;"></div>
+
+            <!-- Step 1: Draft -->
+            <div style="z-index: 2; text-align: center; background-color: var(--bg-card); padding: 0 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; background-color: var(--primary-color); color: #ffffff;">1</div>
+                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">Draft</div>
+            </div>
+
+            <!-- Step 2: Requested -->
+            <div style="z-index: 2; text-align: center; background-color: var(--bg-card); padding: 0 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; background-color: {% if transfer.status != 'draft' %}var(--primary-color){% else %}var(--border-color){% endif %}; color: #ffffff;">2</div>
+                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">Requested</div>
+            </div>
+
+            <!-- Step 3: Approved -->
+            <div style="z-index: 2; text-align: center; background-color: var(--bg-card); padding: 0 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; background-color: {% if transfer.status == 'approved' or transfer.status == 'in_transit' or transfer.status == 'partially_received' or transfer.status == 'received' %}var(--primary-color){% else %}var(--border-color){% endif %}; color: #ffffff;">3</div>
+                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">Approved</div>
+            </div>
+
+            <!-- Step 4: In Transit -->
+            <div style="z-index: 2; text-align: center; background-color: var(--bg-card); padding: 0 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; background-color: {% if transfer.status == 'in_transit' or transfer.status == 'partially_received' or transfer.status == 'received' %}var(--warning-color){% else %}var(--border-color){% endif %}; color: #ffffff;">4</div>
+                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">In Transit</div>
+            </div>
+
+            <!-- Step 5: Received -->
+            <div style="z-index: 2; text-align: center; background-color: var(--bg-card); padding: 0 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700; background-color: {% if transfer.status == 'received' or transfer.status == 'partially_received' %}var(--success-color){% else %}var(--border-color){% endif %}; color: #ffffff;">5</div>
+                <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);">Received</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Grid Card -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Transfer Manifest Products
+        </h3>
+
+        <!-- Receive Form Modal Container -->
+        <div id="receiveModal" style="display: none; background-color: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 15px; color: var(--text-main);">Receive Transfer Items (Partial Receiving Supported)</h4>
+            <form method="POST" action="{% url 'transfer-receive' transfer.id %}">
+                {% csrf_token %}
+                <table class="custom-table" style="margin-bottom: 15px;">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Transferred Qty</th>
+                            <th>Already Received</th>
+                            <th>Receiving Now</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.product.name }} (SKU: {{ item.product.sku }})</td>
+                            <td>{{ item.transferred_quantity }} {{ item.product.unit.short_name }}</td>
+                            <td>{{ item.received_quantity }} {{ item.product.unit.short_name }}</td>
+                            <td>
+                                <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                                <input type="number" name="received_qty[]" class="input-control" min="0" max="{{ item.transferred_quantity }}" value="{{ item.transferred_quantity }}" style="width: 100px;">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-demo" style="padding: 8px 16px;" onclick="document.getElementById('receiveModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="page-actions-btn" style="padding: 8px 16px; background-color: var(--success-color);">Process Received Items</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Reject Modal Container -->
+        <div id="rejectModal" style="display: none; background-color: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 15px; color: var(--danger-color);">Reject Stock Transfer Request</h4>
+            <form method="POST" action="{% url 'transfer-reject' transfer.id %}">
+                {% csrf_token %}
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label class="form-label">Rejection Reason <span style="color: var(--danger-color);">*</span></label>
+                    <textarea name="rejection_reason" class="input-control" rows="3" required placeholder="Specify rejection reason..."></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-demo" style="padding: 8px 16px;" onclick="document.getElementById('rejectModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="page-actions-btn" style="padding: 8px 16px; background-color: var(--danger-color);">Reject Request</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Product Details</th>
+                        <th style="text-align: center;">Source Snapshot</th>
+                        <th style="text-align: center;">Transferred Qty</th>
+                        <th style="text-align: center;">Received Qty</th>
+                        <th style="text-align: center; color: var(--warning-color);">Difference</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.product.name }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">SKU: <code>{{ item.product.sku }}</code></div>
+                        </td>
+                        <td style="text-align: center; color: var(--text-muted);">{{ item.available_stock_snapshot }} {{ item.product.unit.short_name }}</td>
+                        <td style="text-align: center; font-weight: 700;">{{ item.transferred_quantity }} {{ item.product.unit.short_name }}</td>
+                        <td style="text-align: center; font-weight: 700; color: var(--success-color);">{{ item.received_quantity }} {{ item.product.unit.short_name }}</td>
+                        <td style="text-align: center; font-weight: 700; color: var(--warning-color);">{{ item.difference_quantity }}</td>
+                        <td style="font-size: 0.85rem; color: var(--text-muted);">{{ item.remarks|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Audit Activity Log Card -->
+    <div class="side-card" style="padding: 25px;">
+        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Transfer History Audit Log
+        </h3>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Action</th>
+                        <th>User</th>
+                        <th>Notes / Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in history %}
+                    <tr>
+                        <td style="font-size: 0.82rem;">{{ h.created_at|date:"M d, Y H:i" }}</td>
+                        <td><span class="badge badge-info" style="background-color: var(--bg-sidebar); color: var(--text-main);">{{ h.action }}</span></td>
+                        <td style="font-size: 0.82rem;">{{ h.user.username|default:"System" }}</td>
+                        <td style="font-size: 0.82rem; color: var(--text-muted);">{{ h.notes|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">No audit log records recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

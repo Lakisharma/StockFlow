@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Low Stock Alerts | StockFlow AI{% endblock %}
+
+{% block content %}
+<div class="low-stock-list-content" style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 0;">
+        <div>
+            <h1 class="page-title" style="color: var(--warning-color); display: flex; align-items: center; gap: 10px;">
+                <span class="material-icons-round" style="font-size: 32px;">warning</span>
+                <span>Low Stock Alerts</span>
+            </h1>
+            <div class="page-subtitle">Products near or below minimum re-order stock levels</div>
+        </div>
+        <a href="{% url 'inventory-list' %}" class="btn-demo" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center; gap: 8px;">
+            <span class="material-icons-round">arrow_back</span>
+            <span>Back to Inventory</span>
+        </a>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="side-card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Product Details</th>
+                        <th>Warehouse</th>
+                        <th style="text-align: center;">Current Stock</th>
+                        <th style="text-align: center;">Min Threshold</th>
+                        <th style="text-align: center; color: var(--danger-color);">Shortage</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock_items %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'inventory-detail' item.product.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary-color);">
+                                {{ item.product.name }}
+                            </a>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                SKU: <code>{{ item.product.sku }}</code> | Category: {{ item.product.category.name }}
+                            </div>
+                        </td>
+                        <td>
+                            <strong>{{ item.warehouse.name }}</strong>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">Code: {{ item.warehouse.code }}</div>
+                        </td>
+                        <td style="text-align: center; font-weight: 700; color: var(--warning-color);">
+                            {{ item.quantity }} {{ item.product.unit.short_name }}
+                        </td>
+                        <td style="text-align: center; font-weight: 600;">
+                            {{ item.min_stock_level }}
+                        </td>
+                        <td style="text-align: center; font-weight: 700; color: var(--danger-color);">
+                            {% if item.min_stock_level > item.quantity %}
+                                +{{ item.min_stock_level|add:"0" }} units needed
+                            {% else %}
+                                At minimum limit
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="badge badge-warning" style="background-color: var(--warning-light); color: var(--warning-color);">Low Stock</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                <a href="{% url 'purchase-create' %}" class="page-actions-btn" style="padding: 6px 12px; font-size: 0.8rem; text-decoration: none;">
+                                    <span class="material-icons-round" style="font-size: 16px;">shopping_cart</span>
+                                    <span>Reorder</span>
+                                </a>
+                                <a href="{% url 'stock-in' %}?product={{ item.product.id }}&warehouse={{ item.warehouse.id }}" class="page-actions-btn" style="padding: 6px 12px; font-size: 0.8rem; text-decoration: none; background-color: var(--success-color);">
+                                    <span class="material-icons-round" style="font-size: 16px;">add_circle</span>
+                                    <span>Stock In</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <span class="material-icons-round" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 10px; color: var(--success-color);">check_circle</span>
+                            Great news! No products currently have low stock alerts.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
