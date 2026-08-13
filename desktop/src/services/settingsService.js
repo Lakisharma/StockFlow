@@ -1,15 +1,15 @@
 /* global window, fetch, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const SETTINGS_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Settings, Profile & Role Service
  */
 class SettingsService {
   constructor() {
-    this.profileUrl = `${BACKEND_URL}users/profile/`;
-    this.usersUrl = `${BACKEND_URL}users/api/list/`;
-    this.rolesUrl = `${BACKEND_URL}users/api/roles/`;
-    this.changePasswordUrl = `${BACKEND_URL}users/change-password/`;
+    this.profileUrl = `${SETTINGS_BACKEND_URL}users/profile/`;
+    this.usersUrl = `${SETTINGS_BACKEND_URL}users/api/list/`;
+    this.rolesUrl = `${SETTINGS_BACKEND_URL}users/api/roles/`;
+    this.changePasswordUrl = `${SETTINGS_BACKEND_URL}users/change-password/`;
   }
 
   async getUserProfile() {

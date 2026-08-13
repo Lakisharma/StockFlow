@@ -1,13 +1,13 @@
 /* global window, fetch, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const PURCHASE_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Purchase Orders & GRN Service
  */
 class PurchaseService {
   constructor() {
-    this.ordersUrl = `${BACKEND_URL}purchases/api/orders/`;
-    this.suppliersUrl = `${BACKEND_URL}purchases/api/suppliers/`;
+    this.ordersUrl = `${PURCHASE_BACKEND_URL}purchases/api/orders/`;
+    this.suppliersUrl = `${PURCHASE_BACKEND_URL}purchases/api/suppliers/`;
   }
 
   async getPurchaseOrders() {

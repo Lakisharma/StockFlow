@@ -1,12 +1,12 @@
 /* global window, fetch, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const PRODUCT_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Product Catalog Service
  */
 class ProductService {
   constructor() {
-    this.productsUrl = `${BACKEND_URL}products/api/products/`;
+    this.productsUrl = `${PRODUCT_BACKEND_URL}products/api/products/`;
   }
 
   async getProducts() {

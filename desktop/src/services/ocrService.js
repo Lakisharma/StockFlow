@@ -1,13 +1,13 @@
 /* global window, fetch, FormData, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const OCR_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Document OCR Scanner Service
  */
 class OcrService {
   constructor() {
-    this.uploadUrl = `${BACKEND_URL}ocr/api/scans/`;
-    this.baseUrl = `${BACKEND_URL}ocr/`;
+    this.uploadUrl = `${OCR_BACKEND_URL}ocr/api/scans/`;
+    this.baseUrl = `${OCR_BACKEND_URL}ocr/`;
   }
 
   async uploadBillDocument(file) {

@@ -1,13 +1,13 @@
 /* global window, fetch, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const ACCOUNTING_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Accounting & Expenses Service
  */
 class AccountingService {
   constructor() {
-    this.expensesUrl = `${BACKEND_URL}accounting/api/expenses/`;
-    this.vouchersUrl = `${BACKEND_URL}accounting/api/vouchers/`;
+    this.expensesUrl = `${ACCOUNTING_BACKEND_URL}accounting/api/expenses/`;
+    this.vouchersUrl = `${ACCOUNTING_BACKEND_URL}accounting/api/vouchers/`;
   }
 
   async getExpenses() {

@@ -1,12 +1,12 @@
 /* global window, fetch, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const TRANSFER_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Stock Transfer Service
  */
 class TransferService {
   constructor() {
-    this.transfersUrl = `${BACKEND_URL}transfers/api/transfers/`;
+    this.transfersUrl = `${TRANSFER_BACKEND_URL}transfers/api/transfers/`;
   }
 
   async getStockTransfers() {

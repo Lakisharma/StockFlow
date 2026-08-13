@@ -1,12 +1,12 @@
 /* global window, fetch, localStorage, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const AUTH_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Authentication Service
  */
 class AuthService {
   constructor() {
-    this.loginUrl = `${BACKEND_URL}users/login/`;
+    this.loginUrl = `${AUTH_BACKEND_URL}users/login/`;
   }
 
   async login(username, password) {

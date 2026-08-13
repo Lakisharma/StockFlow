@@ -1,14 +1,14 @@
 /* global window, fetch, module */
-const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+const BACKUP_BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
 
 /**
  * StockFlow AI Desktop Backup, Restore & Data Sync Service
  */
 class BackupService {
   constructor() {
-    this.recordsUrl = `${BACKEND_URL}backups/api/records/`;
-    this.createUrl = `${BACKEND_URL}backups/create/`;
-    this.baseUrl = `${BACKEND_URL}backups/`;
+    this.recordsUrl = `${BACKUP_BACKEND_URL}backups/api/records/`;
+    this.createUrl = `${BACKUP_BACKEND_URL}backups/create/`;
+    this.baseUrl = `${BACKUP_BACKEND_URL}backups/`;
   }
 
   async getBackupHistory() {
