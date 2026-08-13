@@ -1,11 +1,13 @@
 /* global window, fetch, module */
+const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+
 /**
  * StockFlow AI Central API Service
  */
 class ApiService {
   constructor() {
-    this.baseUrl = 'http://127.0.0.1:8000/api/';
-    this.healthUrl = 'http://127.0.0.1:8000/health/';
+    this.baseUrl = typeof CONFIG !== 'undefined' ? CONFIG.API_BASE_URL : `${BACKEND_URL}api/`;
+    this.healthUrl = `${BACKEND_URL}health/`;
   }
 
   async checkHealth() {

@@ -1,11 +1,13 @@
 /* global window, fetch, module */
+const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+
 /**
  * StockFlow AI Natural Language Assistant Service
  */
 class AiAssistantService {
   constructor() {
-    this.searchUrl = 'http://127.0.0.1:8000/api/search/';
-    this.queryUrl = 'http://127.0.0.1:8000/api/ai/query/';
+    this.searchUrl = `${BACKEND_URL}api/search/`;
+    this.queryUrl = `${BACKEND_URL}api/ai/query/`;
   }
 
   async parseAndExecuteQuery(queryText) {
@@ -13,7 +15,7 @@ class AiAssistantService {
 
     try {
       if (q.includes("sales") || q.includes("biki") || q.includes("revenue")) {
-        const res = await fetch('http://127.0.0.1:8000/reports/api/metrics/');
+        const res = await fetch(`${BACKEND_URL}reports/api/metrics/`);
         const data = await res.json();
         return {
           type: 'info',
@@ -23,7 +25,7 @@ class AiAssistantService {
       }
 
       if (q.includes("low stock") || q.includes("kam stock")) {
-        const res = await fetch('http://127.0.0.1:8000/products/api/stock/');
+        const res = await fetch(`${BACKEND_URL}products/api/stock/`);
         const data = await res.json();
         const items = Array.isArray(data) ? data : (data.results || []);
         const lowItems = items.filter(i => i.quantity <= 10);

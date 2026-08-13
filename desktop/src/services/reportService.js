@@ -1,11 +1,13 @@
 /* global window, fetch, module */
+const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+
 /**
  * StockFlow AI Reports & Executive Analytics Service
  */
 class ReportService {
   constructor() {
-    this.metricsUrl = 'http://127.0.0.1:8000/reports/api/metrics/';
-    this.comparisonUrl = 'http://127.0.0.1:8000/reports/api/comparison/';
+    this.metricsUrl = `${BACKEND_URL}reports/api/metrics/`;
+    this.comparisonUrl = `${BACKEND_URL}reports/api/comparison/`;
   }
 
   async getDashboardMetrics() {

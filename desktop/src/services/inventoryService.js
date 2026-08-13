@@ -1,11 +1,13 @@
 /* global window, fetch, module */
+const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+
 /**
  * StockFlow AI Inventory & Stock Balances Service
  */
 class InventoryService {
   constructor() {
-    this.stockUrl = 'http://127.0.0.1:8000/products/api/stocks/';
-    this.warehousesUrl = 'http://127.0.0.1:8000/products/api/warehouses/';
+    this.stockUrl = `${BACKEND_URL}products/api/stocks/`;
+    this.warehousesUrl = `${BACKEND_URL}products/api/warehouses/`;
   }
 
   async getWarehouseStock() {

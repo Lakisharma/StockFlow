@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Environment & Version Info
   getAppVersion: () => '1.0.0',
   isDesktop: true,
+  getEnv: () => ipcRenderer.sendSync('get-env'),
 
   // USB Barcode Scanner Listener Bridge
   onScannerInput: (callback) => {

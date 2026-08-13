@@ -5,6 +5,12 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
 
+  // Dynamically update connection endpoint display
+  const connectionUrlEl = document.getElementById('connectionUrl');
+  if (connectionUrlEl && typeof CONFIG !== 'undefined') {
+    connectionUrlEl.textContent = CONFIG.API_BASE_URL;
+  }
+
   // DOM Window Controls
   const btnWindowMinimize = document.getElementById('btnWindowMinimize');
   const btnWindowMaximize = document.getElementById('btnWindowMaximize');

@@ -1,10 +1,12 @@
 /* global window, fetch, localStorage, module */
+const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+
 /**
  * StockFlow AI Authentication Service
  */
 class AuthService {
   constructor() {
-    this.loginUrl = 'http://127.0.0.1:8000/users/login/';
+    this.loginUrl = `${BACKEND_URL}users/login/`;
   }
 
   async login(username, password) {
@@ -24,7 +26,7 @@ class AuthService {
       }
       return { success: true, data };
     } catch (e) {
-      return { success: false, error: e.message || "Connection failed to http://127.0.0.1:8000/api/" };
+      return { success: false, error: e.message || `Connection failed to ${typeof CONFIG !== "undefined" ? CONFIG.API_BASE_URL : "http://127.0.0.1:8000/api/"}` };
     }
   }
 

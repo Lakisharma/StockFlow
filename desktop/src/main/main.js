@@ -61,6 +61,10 @@ ipcMain.on('network-status-changed', (event, isOnline) => {
   console.log(`[Desktop Main] System Connectivity Status: ${isOnline ? 'Online' : 'Offline'}`);
 });
 
+ipcMain.on('get-env', (event) => {
+  event.returnValue = process.argv.includes('--env=development') ? 'development' : 'production';
+});
+
 // Application Lifecycle Event Listeners
 app.whenReady().then(() => {
   createMainWindow();

@@ -1,11 +1,13 @@
 /* global window, fetch, module */
+const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+
 /**
  * StockFlow AI Sales Dispatches & Invoicing Service
  */
 class SalesService {
   constructor() {
-    this.ordersUrl = 'http://127.0.0.1:8000/sales/api/orders/';
-    this.customersUrl = 'http://127.0.0.1:8000/sales/api/customers/';
+    this.ordersUrl = `${BACKEND_URL}sales/api/orders/`;
+    this.customersUrl = `${BACKEND_URL}sales/api/customers/`;
   }
 
   async getSalesDispatches() {

@@ -1,11 +1,13 @@
 /* global window, fetch, module */
+const BACKEND_URL = typeof CONFIG !== 'undefined' ? CONFIG.BACKEND_URL : 'http://127.0.0.1:8000/';
+
 /**
  * StockFlow AI Notification & Alert Service
  */
 class NotificationService {
   constructor() {
-    this.notificationsUrl = 'http://127.0.0.1:8000/notifications/api/items/';
-    this.markAllReadUrl = 'http://127.0.0.1:8000/notifications/mark-all-read/';
+    this.notificationsUrl = `${BACKEND_URL}notifications/api/items/`;
+    this.markAllReadUrl = `${BACKEND_URL}notifications/mark-all-read/`;
   }
 
   async getNotifications() {
