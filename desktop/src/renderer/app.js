@@ -421,4 +421,211 @@ document.addEventListener('DOMContentLoaded', () => {
     backupsHistoryTableBody.innerHTML = rows;
   }
 
+  // 6. Product Creation Modal Handlers
+  const btnOpenCreateProductModal = document.getElementById('btnOpenCreateProductModal');
+  const modalCreateProduct = document.getElementById('modalCreateProduct');
+  const btnCloseProductModal = document.getElementById('btnCloseProductModal');
+  const btnCancelProductModal = document.getElementById('btnCancelProductModal');
+  const formCreateProduct = document.getElementById('formCreateProduct');
+
+  if (btnOpenCreateProductModal && modalCreateProduct) {
+    btnOpenCreateProductModal.addEventListener('click', () => {
+      modalCreateProduct.style.display = 'flex';
+    });
+  }
+
+  if (btnCloseProductModal && modalCreateProduct) {
+    btnCloseProductModal.addEventListener('click', () => {
+      modalCreateProduct.style.display = 'none';
+    });
+  }
+
+  if (btnCancelProductModal && modalCreateProduct) {
+    btnCancelProductModal.addEventListener('click', () => {
+      modalCreateProduct.style.display = 'none';
+    });
+  }
+
+  if (formCreateProduct) {
+    formCreateProduct.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('prodName').value.trim();
+      const sku = document.getElementById('prodSku').value.trim();
+      const barcode = document.getElementById('prodBarcode').value.trim();
+      const selling_price = document.getElementById('prodPrice').value.trim();
+      const reorder_level = document.getElementById('prodReorderLevel').value.trim();
+
+      const submitBtn = formCreateProduct.querySelector('button[type="submit"]');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
+
+      const res = await productService.createProduct({
+        name, sku, barcode, selling_price, reorder_level
+      });
+
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Save Product to Server'; }
+
+      if (res.success) {
+        alert(`✅ Product "${name}" created successfully on the server!`);
+        formCreateProduct.reset();
+        modalCreateProduct.style.display = 'none';
+        loadProductsTable();
+        loadDashboardMetrics();
+      } else {
+        alert(`❌ Error creating product: ${res.error || 'Check fields or server connection'}`);
+      }
+    });
+  }
+
+  // 7. Change Password Modal Handlers
+  const btnOpenChangePasswordModal = document.getElementById('btnOpenChangePasswordModal');
+  const modalChangePassword = document.getElementById('modalChangePassword');
+  const btnClosePasswordModal = document.getElementById('btnClosePasswordModal');
+  const btnCancelPasswordModal = document.getElementById('btnCancelPasswordModal');
+  const formChangePassword = document.getElementById('formChangePassword');
+
+  if (btnOpenChangePasswordModal && modalChangePassword) {
+    btnOpenChangePasswordModal.addEventListener('click', () => {
+      modalChangePassword.style.display = 'flex';
+    });
+  }
+
+  if (btnClosePasswordModal && modalChangePassword) {
+    btnClosePasswordModal.addEventListener('click', () => {
+      modalChangePassword.style.display = 'none';
+    });
+  }
+
+  if (btnCancelPasswordModal && modalChangePassword) {
+    btnCancelPasswordModal.addEventListener('click', () => {
+      modalChangePassword.style.display = 'none';
+    });
+  }
+
+  if (formChangePassword) {
+    formChangePassword.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPass = document.getElementById('inputCurrentPass').value;
+      const newPass = document.getElementById('inputNewPass').value;
+      const confirmPass = document.getElementById('inputConfirmPass').value;
+
+      if (newPass !== confirmPass) {
+        alert("❌ New password and confirmation do not match.");
+        return;
+      }
+
+      if (newPass.length < 6) {
+        alert("❌ New password must be at least 6 characters long.");
+        return;
+      }
+
+      const submitBtn = formChangePassword.querySelector('button[type="submit"]');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Updating...'; }
+
+      const res = await authService.changePassword(currentPass, newPass);
+
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Update Password'; }
+
+      if (res.success) {
+        alert("✅ Password updated successfully! Please use your new password next time you sign in.");
+        formChangePassword.reset();
+        modalChangePassword.style.display = 'none';
+      } else {
+        alert(`❌ Error updating password: ${res.error || 'Current password might be incorrect'}`);
+      }
+    });
+  }
+
+  // 8. AI Smart Assistant Chat Handlers
+  const formAiChatInput = document.getElementById('formAiChatInput');
+  const inputAiQuery = document.getElementById('inputAiQuery');
+  const aiChatHistory = document.getElementById('aiChatHistory');
+
+  function appendChatMessage(sender, text) {
+    if (!aiChatHistory) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${sender}`;
+    const iconName = sender === 'assistant' ? 'smart_toy' : 'person';
+    const formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+    msgDiv.innerHTML = `
+      <span class="material-icons-round icon">${iconName}</span>
+      <div class="message-content">
+        <p>${formattedText}</p>
+      </div>
+    `;
+    aiChatHistory.appendChild(msgDiv);
+    aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+  }
+
+  if (formAiChatInput && inputAiQuery) {
+    formAiChatInput.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = inputAiQuery.value.trim();
+      if (!query) return;
+
+      appendChatMessage('user', query);
+      inputAiQuery.value = '';
+
+      // Typing indicator
+      appendChatMessage('assistant', 'Thinking...');
+      const thinkingEl = aiChatHistory.lastElementChild;
+
+      const result = await aiAssistantService.parseAndExecuteQuery(query);
+      if (thinkingEl && thinkingEl.parentNode) {
+        thinkingEl.parentNode.removeChild(thinkingEl);
+      }
+
+      appendChatMessage('assistant', result.response_text || 'I could not process your query.');
+    });
+  }
+
+  window.sendAiChip = function(queryText) {
+    if (inputAiQuery && formAiChatInput) {
+      inputAiQuery.value = queryText;
+      formAiChatInput.dispatchEvent(new Event('submit'));
+    }
+  };
+
+  // 9. Report Export & Print Actions
+  const btnExportSalesCsv = document.getElementById('btnExportSalesCsv');
+  const btnExportInventoryCsv = document.getElementById('btnExportInventoryCsv');
+  const btnPrintReports = document.getElementById('btnPrintReports');
+
+  if (btnExportSalesCsv) {
+    btnExportSalesCsv.addEventListener('click', async () => {
+      const list = await salesService.getSalesDispatches();
+      let csv = "Invoice,Customer,Warehouse,Amount,Status,Date\n";
+      list.forEach(s => {
+        csv += `"${s.invoice_number || s.id}","${s.customer_name || 'Customer'}","${s.warehouse_name || 'Warehouse'}","${s.total_amount || 0}","${s.payment_status || 'Paid'}","${s.dispatch_date || ''}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sales_report_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    });
+  }
+
+  if (btnExportInventoryCsv) {
+    btnExportInventoryCsv.addEventListener('click', async () => {
+      const list = await inventoryService.getWarehouseStock();
+      let csv = "Product,Warehouse,Quantity,Batch,Status\n";
+      list.forEach(i => {
+        csv += `"${i.product_name || i.product}","${i.warehouse_name || i.warehouse}","${i.quantity || 0}","${i.batch_number || ''}","Available"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inventory_report_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    });
+  }
+
+  if (btnPrintReports) {
+    btnPrintReports.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
 });

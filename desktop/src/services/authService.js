@@ -30,6 +30,32 @@ class AuthService {
     }
   }
 
+  async changePassword(currentPassword, newPassword) {
+    try {
+      const username = (typeof localStorage !== 'undefined' && localStorage.getItem('sf_user_name')) || 'admin';
+      const token = (typeof localStorage !== 'undefined' && localStorage.getItem('sf_user_token')) || '';
+      const response = await fetch(`${AUTH_BACKEND_URL}users/api/change-password/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          username,
+          current_password: currentPassword,
+          new_password: newPassword
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        return { success: false, error: data.error || "Failed to update password." };
+      }
+      return { success: true, message: data.message || "Password updated successfully!" };
+    } catch (e) {
+      return { success: false, error: e.message || "Connection error." };
+    }
+  }
+
   logout() {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('sf_user_token');

@@ -5,6 +5,7 @@ from . import api_views
 urlpatterns = [
     # REST API ViewSets
     path('login/', api_views.api_login, name='api-login'),
+    path('api/change-password/', api_views.api_change_password, name='api-change-password'),
     path('api/list/', api_views.UserViewSet.as_view({'get': 'list'}), name='api-users-list'),
     path('api/roles/', api_views.RoleViewSet.as_view({'get': 'list'}), name='api-roles-list'),
     path('api/logs/', api_views.UserActivityLogViewSet.as_view({'get': 'list'}), name='api-activity-logs'),

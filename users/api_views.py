@@ -54,3 +54,39 @@ def api_login(request):
             return Response({'success': False, 'error': 'Account is disabled.'}, status=400)
     return Response({'success': False, 'error': 'Invalid username/email or password.'}, status=400)
 
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_change_password(request):
+    data = request.data if request.data else {}
+    if not data and request.body:
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            data = {}
+    username = data.get('username', '').strip()
+    current_password = data.get('current_password', '').strip()
+    new_password = data.get('new_password', '').strip()
+
+    if not username:
+        if request.user and request.user.is_authenticated:
+            user = request.user
+        else:
+            return Response({'success': False, 'error': 'Username is required.'}, status=400)
+    else:
+        user = User.objects.filter(username__iexact=username).first() or User.objects.filter(email__iexact=username).first()
+
+    if not user:
+        return Response({'success': False, 'error': 'User not found.'}, status=404)
+
+    if not user.check_password(current_password):
+        return Response({'success': False, 'error': 'Current password does not match.'}, status=400)
+
+    if len(new_password) < 6:
+        return Response({'success': False, 'error': 'New password must be at least 6 characters.'}, status=400)
+
+    user.set_password(new_password)
+    user.save()
+    return Response({'success': True, 'message': 'Password changed successfully!'})
+
+
