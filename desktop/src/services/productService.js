@@ -25,7 +25,31 @@ class ProductService {
     try {
       const token = (typeof localStorage !== 'undefined' && localStorage.getItem('sf_user_token')) || '';
       
-      // Provide smart defaults for required foreign keys
+      let categoryId = null;
+      let unitId = null;
+
+      try {
+        const catRes = await fetch(`${PRODUCT_BACKEND_URL}categories/api/`);
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          const cats = Array.isArray(catData) ? catData : (catData.results || []);
+          if (cats.length > 0) categoryId = cats[0].id;
+        }
+      } catch (e) {
+        console.warn("Could not fetch categories:", e);
+      }
+
+      try {
+        const unitRes = await fetch(`${PRODUCT_BACKEND_URL}units/api/`);
+        if (unitRes.ok) {
+          const unitData = await unitRes.json();
+          const units = Array.isArray(unitData) ? unitData : (unitData.results || []);
+          if (units.length > 0) unitId = units[0].id;
+        }
+      } catch (e) {
+        console.warn("Could not fetch units:", e);
+      }
+
       const payload = {
         name: productData.name,
         sku: productData.sku,
@@ -36,10 +60,11 @@ class ProductService {
         gst_rate: productData.gst_rate || '18.00',
         current_stock: parseInt(productData.current_stock || productData.reorder_level || 0, 10),
         min_stock_level: parseInt(productData.reorder_level || 5, 10),
-        category: productData.category || 1,
-        unit: productData.unit || 1,
         status: 'active'
       };
+
+      if (categoryId) payload.category = categoryId;
+      if (unitId) payload.unit = unitId;
 
       const response = await fetch(this.productsUrl, {
         method: 'POST',
@@ -51,7 +76,7 @@ class ProductService {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const errMsg = typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Failed to create product';
+        const errMsg = typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ') : 'Failed to create product';
         return { success: false, error: errMsg };
       }
       return { success: true, data };

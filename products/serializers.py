@@ -31,6 +31,9 @@ class ProductHistorySerializer(serializers.ModelSerializer):
         model = ProductHistory
         fields = ['id', 'product', 'action', 'detail', 'created_at']
 
+from categories.models import Category
+from units.models import Unit
+
 class ProductSerializer(serializers.ModelSerializer):
     stock_status = serializers.ReadOnlyField()
     category_detail = CategorySerializer(source='category', read_only=True)
@@ -38,6 +41,40 @@ class ProductSerializer(serializers.ModelSerializer):
     unit_detail = UnitSerializer(source='unit', read_only=True)
     warehouse_detail = WarehouseSerializer(source='warehouse', read_only=True)
     
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False, allow_null=True)
+    unit = serializers.PrimaryKeyRelatedField(queryset=Unit.objects.all(), required=False, allow_null=True)
+
+    def validate_category(self, value):
+        if not value:
+            cat = Category.objects.filter(status='active').first() or Category.objects.first()
+            if not cat:
+                cat = Category.objects.create(name='General', code='CAT-GEN', status='active')
+            return cat
+        return value
+
+    def validate_unit(self, value):
+        if not value:
+            u = Unit.objects.filter(status='active').first() or Unit.objects.first()
+            if not u:
+                u = Unit.objects.create(name='Piece', short_name='PCS', status='active')
+            return u
+        return value
+
+    def create(self, validated_data):
+        if 'category' not in validated_data or not validated_data['category']:
+            cat = Category.objects.filter(status='active').first() or Category.objects.first()
+            if not cat:
+                cat = Category.objects.create(name='General', code='CAT-GEN', status='active')
+            validated_data['category'] = cat
+
+        if 'unit' not in validated_data or not validated_data['unit']:
+            u = Unit.objects.filter(status='active').first() or Unit.objects.first()
+            if not u:
+                u = Unit.objects.create(name='Piece', short_name='PCS', status='active')
+            validated_data['unit'] = u
+
+        return super().create(validated_data)
+
     class Meta:
         model = Product
         fields = [
@@ -51,3 +88,4 @@ class ProductSerializer(serializers.ModelSerializer):
             'weight', 'dimensions', 'manufacturer', 'country_of_origin', 
             'notes', 'stock_status', 'created_at', 'updated_at'
         ]
+
