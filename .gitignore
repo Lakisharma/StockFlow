@@ -1,38 +1,84 @@
-# Python Bytecode & Cache
+# ==============================================================================
+# StockFlow AI - Git Ignore Configuration
+# ==============================================================================
+
+# Python Bytecode, Caches & Environments
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Django Local Data & Media
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Environment Variables & Secrets
 .env
+.env.*
+!.env.example
+
+# Local Databases containing business/test data
 *.sqlite3
-db.sqlite3-journal
+*.sqlite3-journal
+*.db
+*.db-journal
+
+# Media, Static & Temporary Files
 media/
 staticfiles/
+scratch/
+*.log
+logs/
+*.tar.gz
+*.zip
+*.tmp
+*.bak
 
-# IDE & Editor Files
+# IDE & Editor Configurations
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# Virtual Environment
-venv/
-env/
-ENV/
-.venv/
-
-# Backup Archives & Temporary Logs
-*.log
-*.tar.gz
-scratch/
-
-# Node.js & Desktop Dist
+# Node.js & Desktop Application Build Artifacts
 node_modules/
 desktop/node_modules/
 desktop/dist/
 release/*.exe
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
 
+# Testing & Coverage
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+htmlcov/

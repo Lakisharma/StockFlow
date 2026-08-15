@@ -1,36 +1,35 @@
 # 📦 StockFlow AI — Enterprise Warehouse & Inventory Management System
 
-StockFlow AI is a robust, modular, and enterprise-grade Warehouse & Inventory Management System designed to streamline business operations, automate workflows, and provide deep analytics. Built using **Django** and **Vanilla Javascript/CSS**, it provides a high-performance solution for inventory tracking, sales/purchase management, multi-warehouse transfers, audit logs, OCR scanning, and desktop application integration.
+StockFlow AI is a robust, modular, and enterprise-grade Warehouse & Inventory Management System designed to streamline supply chain operations, automate procurement and fulfillment workflows, provide real-time inventory tracking, and deliver business intelligence analytics. Built with a high-performance **Django** backend, modern web UI, and a dedicated **Electron Windows Desktop Application**, StockFlow AI synchronizes operations across web and desktop clients.
 
 ---
 
-## 🚀 Key Modules & Features
+## 🚀 Key Features & Completed Modules
 
-StockFlow AI is structured into highly cohesive modules, each managing a specific domain of warehouse operations:
-
-1. **📦 Inventory & Products**: Comprehensive product catalog with variants, batches, units, and brand tracking.
-2. **🏢 Multi-Warehouse Transfers**: Seamless movement of stock between different locations with status tracking.
-3. **📊 Sales & Purchases**: Manage purchase orders from suppliers and sales invoices for customers.
-4. **🔍 OCR Scanner**: Automated barcode and document scanning using OCR technology to speed up data entry.
-5. **💰 Accounting & Payments**: In-built accounting ledgers, invoices, payment tracking, and financial reconciliation.
-6. **📈 Analytics & Reports**: Visual reports, sales forecasting, inventory levels, and business health metrics.
-7. **🔒 System Admin & Audit Logs**: High-security audit trail tracking user activities, changes, and system events.
-8. **👥 User & Employee Management**: Role-Based Access Control (RBAC) for administrators, managers, and warehouse staff.
-9. **🔔 Real-time Notifications**: Alerts for low stock levels, pending transfers, and system updates.
+1. **📦 Product & Inventory Management**: Multi-category product catalog with SKU, barcode generation, batch tracking, unit conversions, reorder thresholds, and live warehouse stock levels.
+2. **🏢 Multi-Warehouse & Godown Transfers**: Inter-warehouse transfer workflows with dispatch approval, transit tracking, and receiving inspection.
+3. **🛒 Procurement & Supplier Management (PO → GRN)**: Supplier directory, purchase orders, quality checks, goods receipt notes (GRN), and automated stock-in.
+4. **🛍️ Sales, Orders & Dispatch (SO → Invoice → Stock-Out)**: Customer database, sales orders, automated picking, dispatch fulfillment, invoice generation, and tax calculation.
+5. **💰 Payments & Financial Ledgers**: Customer payments, supplier payments, payment allocations, bank account balances, and automated ledger balancing.
+6. **🤖 AI Smart Assistant & OCR Engine**: AI-assisted inventory queries and automated document/invoice barcode scanning.
+7. **📊 Analytics & Executive Reports**: Real-time KPI dashboard, sales turnover, inventory valuation, profit margins, and exportable audit reports.
+8. **🔒 Security, RBAC & Audit Trails**: Role-based access control (Super Admin, Warehouse Manager, Staff), granular permissions, and tamper-evident audit logs.
+9. **🔔 Real-time Notifications**: Alert system for low stock levels, pending approvals, and transaction milestones.
+10. **💾 Automated Backups & System Health**: One-click database backups, snapshot restoration, and diagnostic health monitoring.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Backend**: Python 3.10+ & Django
-- **Frontend**: Vanilla JS, Vanilla CSS, HTML5
-- **Database**: SQLite (Development) / PostgreSQL (Production)
-- **Scanning**: OCR scanning engine
-- **WSGI/Proxy**: Gunicorn & Nginx (for Linux deployment)
+- **Web Frontend**: HTML5, Vanilla JavaScript, Vanilla CSS, Material Icons
+- **Backend API & Framework**: Python 3.10+, Django 5.x, Django REST Framework
+- **Database**: PostgreSQL (Production) / SQLite (Local Development)
+- **Desktop Client**: Electron JS, Node.js
+- **Deployment & Server**: Gunicorn, Nginx, Render Cloud Platform
 
 ---
 
-## ⚙️ Quick Start (Local Setup)
+## ⚙️ Installation & Development Setup
 
 ### 1. Clone the Repository
 ```bash
@@ -38,39 +37,80 @@ git clone https://github.com/Lakisharma/StockFlow.git
 cd StockFlow
 ```
 
-### 2. Set Up a Virtual Environment
+### 2. Set Up Python Virtual Environment
 ```bash
 python -m venv venv
-# On Windows
+
+# Windows
 venv\Scripts\activate
-# On macOS/Linux
+
+# macOS / Linux
 source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+### 3. Install Backend Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Set Up Environment Variables
-Copy `.env.example` to `.env` and adjust the variables:
+### 4. Configure Environment Variables
+Copy `.env.example` to `.env` and configure your environment settings:
 ```bash
 cp .env.example .env
 ```
 
-### 5. Apply Migrations & Start Server
+### 5. Apply Database Migrations & Start Development Server
 ```bash
 python manage.py migrate
 python manage.py runserver
 ```
-Visit the local instance at `http://127.0.0.1:8000/`.
+Access the application locally at `http://127.0.0.1:8000/`.
 
 ---
 
-## 🌐 Production Deployment
+## 🖥️ Desktop Application (Electron)
 
-Refer to the complete deployment guide in [DEPLOYMENT.md](DEPLOYMENT.md) for Nginx, Gunicorn, SSL installation, and database configurations.
+The StockFlow AI Desktop client connects securely to the centralized production backend API.
+
+### Run Desktop in Development Mode
+```bash
+cd desktop
+npm install
+npm run dev
+```
+
+### Build Windows Installer
+```bash
+cd desktop
+npm run build:win
+```
+The compiled Windows installer package will be generated at:
+`desktop/dist/StockFlow AI Desktop Setup 1.0.0.exe`
+
+---
+
+## 🌐 Production Configuration
+
+- **Production Backend URL**: Configured via secure environment variables (`BACKEND_URL`).
+- **Web App**: Production deployment instructions using Gunicorn and Nginx with SSL are documented in [DEPLOYMENT.md](DEPLOYMENT.md).
+- **Cross-Platform Sync**: Both Web and Desktop applications communicate with the shared centralized REST API.
+
+---
 
 ## 🛡️ Backup & Disaster Recovery
 
-Refer to [BACKUP.md](BACKUP.md) and [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) for database backup automation scripts, recovery manuals, and system maintenance instructions.
+- Automated database backups and integrity verification are managed under the **Backups** module.
+- For backup restoration procedures and disaster recovery runbooks, refer to [BACKUP.md](BACKUP.md) and [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md).
+
+---
+
+## 🔒 Security Best Practices
+
+- Never commit `.env` files, production credentials, or database backups to public version control.
+- Ensure `DEBUG=False` and configure strong `SECRET_KEY`, `ALLOWED_HOSTS`, and `CSRF_TRUSTED_ORIGINS` in production environments.
+- Enforce Role-Based Access Control (RBAC) and maintain regular security audits via the System Admin Control Center.
+
+---
+
+## 📄 License
+This project is proprietary software for StockFlow AI. All rights reserved.
