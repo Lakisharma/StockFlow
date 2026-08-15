@@ -309,12 +309,42 @@ document.addEventListener('DOMContentLoaded', () => {
     expensesTableBody.innerHTML = rows;
   }
 
+  const reportsComparisonTableBody = document.getElementById('reportsComparisonTableBody');
+
   async function loadReportsData() {
-    const data = await reportService.getDashboardMetrics();
-    if (reportKpiRevenue) reportKpiRevenue.textContent = `$${parseFloat(data.total_sales || 0).toFixed(2)}`;
-    if (reportKpiPurchases) reportKpiPurchases.textContent = `$${parseFloat(data.total_purchases || 0).toFixed(2)}`;
-    if (reportKpiStockValue) reportKpiStockValue.textContent = `$${parseFloat(data.inventory_value || 0).toFixed(2)}`;
-    if (reportKpiLowStock) reportKpiLowStock.textContent = data.low_stock_count || 0;
+    try {
+      const data = await reportService.getDashboardMetrics();
+      if (reportKpiRevenue) reportKpiRevenue.textContent = `₹${parseFloat(data.total_sales || 0).toFixed(2)}`;
+      if (reportKpiPurchases) reportKpiPurchases.textContent = `₹${parseFloat(data.total_purchases || data.total_purchase_amount || 0).toFixed(2)}`;
+      if (reportKpiStockValue) reportKpiStockValue.textContent = `₹${parseFloat(data.inventory_value || data.total_inventory_value || 0).toFixed(2)}`;
+      if (reportKpiLowStock) reportKpiLowStock.textContent = data.low_stock_count || 0;
+
+      if (reportsComparisonTableBody) {
+        const whList = await reportService.getWarehouseComparison();
+        if (!Array.isArray(whList) || whList.length === 0) {
+          reportsComparisonTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:24px;">No warehouse comparison metrics yet (0 warehouses registered in production).</td></tr>`;
+        } else {
+          let rows = '';
+          whList.forEach(w => {
+            rows += `
+              <tr>
+                <td><strong>${w.name || w.warehouse_name || 'Warehouse'}</strong></td>
+                <td><code>${w.code || '--'}</code></td>
+                <td>${w.total_products || w.product_count || 0}</td>
+                <td><strong>${w.physical_stock || w.total_stock || 0}</strong></td>
+                <td><span class="badge badge-success">${w.status || 'Active'}</span></td>
+              </tr>
+            `;
+          });
+          reportsComparisonTableBody.innerHTML = rows;
+        }
+      }
+    } catch (err) {
+      console.warn("[Desktop App] Error loading reports:", err);
+      if (reportsComparisonTableBody) {
+        reportsComparisonTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:24px;">No warehouse data available.</td></tr>`;
+      }
+    }
   }
 
   async function loadNotificationsData() {
