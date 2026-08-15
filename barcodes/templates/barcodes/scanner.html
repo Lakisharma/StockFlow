@@ -42,22 +42,101 @@
                 <span class="badge" style="background-color: rgba(59, 130, 246, 0.15); color: #2563eb; padding: 4px 8px;">Active Mode: {{ mode|title }}</span>
             </div>
 
-            <!-- Simulated Camera Viewfinder -->
-            <div id="scannerFrame" style="position: relative; width: 100%; height: 240px; background-color: #000; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 2px dashed #3b82f6;">
-                <div style="position: absolute; width: 80%; height: 60%; border: 2px solid #22c55e; border-radius: 6px; box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); display: flex; justify-content: center; align-items: center; color: #22c55e; font-weight: 700; font-size: 0.85rem;">
+            <!-- Real-Time Camera Viewfinder -->
+            <div id="scannerFrame" style="position: relative; width: 100%; height: 260px; background-color: #000; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 2px dashed #3b82f6;">
+                <video id="cameraVideo" playsinline autoplay muted style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                <div id="cameraOverlay" style="position: absolute; width: 80%; height: 60%; border: 2px solid #22c55e; border-radius: 6px; box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); display: flex; justify-content: center; align-items: center; color: #22c55e; font-weight: 700; font-size: 0.85rem; pointer-events: none;">
                     [ ALIGN BARCODE INSIDE FRAME ]
                 </div>
-                <div style="color: #9ca3af; font-size: 0.85rem; z-index: 1;">
-                    Camera Viewfinder Ready (USB Keyboard Listener Active)
+                <div id="cameraPlaceholder" style="color: #9ca3af; font-size: 0.85rem; z-index: 1; text-align: center; padding: 20px;">
+                    <span class="material-icons-round" style="font-size: 40px; color: #3b82f6; display: block; margin-bottom: 8px;">photo_camera</span>
+                    Click <strong>"Start Camera"</strong> below or use USB Scanner
                 </div>
             </div>
 
+            <!-- Camera Toggle Controls -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" id="btnToggleCamera" class="btn-demo" style="flex: 1; padding: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span class="material-icons-round">videocam</span>
+                    <span id="btnCameraText">Start Camera Scanner</span>
+                </button>
+                <a href="{% url 'ocr-upload' %}" class="page-actions-btn" style="flex: 1; padding: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span class="material-icons-round">receipt_long</span>
+                    <span>AI Bill / Invoice Scanner</span>
+                </a>
+            </div>
+
             <!-- Manual Barcode / USB Scanner Input -->
-            <form method="GET" style="display: flex; gap: 10px;">
+            <form method="GET" id="barcodeForm" style="display: flex; gap: 10px;">
                 <input type="hidden" name="mode" value="{{ mode }}">
-                <input type="text" name="barcode" id="barcodeInput" class="input-control" placeholder="Scan with USB Scanner or enter barcode/SKU..." value="{{ query|default:'' }}" autofocus style="font-family: monospace; font-size: 1.05rem; font-weight: 700;">
+                <input type="text" name="barcode" id="barcodeInput" class="input-control" placeholder="Scan barcode or type SKU..." value="{{ query|default:'' }}" autofocus style="font-family: monospace; font-size: 1.05rem; font-weight: 700;">
                 <button type="submit" class="page-actions-btn" style="padding: 10px 20px;">Search</button>
             </form>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const btnToggleCamera = document.getElementById('btnToggleCamera');
+                const btnCameraText = document.getElementById('btnCameraText');
+                const video = document.getElementById('cameraVideo');
+                const placeholder = document.getElementById('cameraPlaceholder');
+                const barcodeInput = document.getElementById('barcodeInput');
+                const barcodeForm = document.getElementById('barcodeForm');
+                let stream = null;
+                let isScanning = false;
+
+                async function startCamera() {
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                        });
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        placeholder.style.display = 'none';
+                        btnCameraText.textContent = 'Stop Camera';
+                        isScanning = true;
+                        initBarcodeDetection();
+                    } catch (err) {
+                        alert('Could not access camera. Please allow camera permissions in your browser settings: ' + err.message);
+                    }
+                }
+
+                function stopCamera() {
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                        stream = null;
+                    }
+                    video.style.display = 'none';
+                    placeholder.style.display = 'block';
+                    btnCameraText.textContent = 'Start Camera Scanner';
+                    isScanning = false;
+                }
+
+                btnToggleCamera.addEventListener('click', () => {
+                    if (stream) stopCamera();
+                    else startCamera();
+                });
+
+                function initBarcodeDetection() {
+                    if ('BarcodeDetector' in window) {
+                        const detector = new BarcodeDetector({
+                            formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'qr_code', 'upc_a', 'upc_e']
+                        });
+                        const scanInterval = setInterval(async () => {
+                            if (!isScanning) { clearInterval(scanInterval); return; }
+                            try {
+                                const barcodes = await detector.detect(video);
+                                if (barcodes.length > 0) {
+                                    const code = barcodes[0].rawValue;
+                                    barcodeInput.value = code;
+                                    stopCamera();
+                                    barcodeForm.submit();
+                                }
+                            } catch (e) {}
+                        }, 500);
+                    }
+                }
+            });
+            </script>
         </div>
 
         <!-- Right: Scan Result & Multi-Godown Stock Breakdown -->
@@ -127,7 +206,7 @@
                 <div style="font-size: 1.1rem; font-weight: 800;">Product Not Found</div>
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">No product matches barcode or SKU '{{ query }}'.</div>
                 <div style="margin-top: 15px;">
-                    <a href="{% url 'product-create' %}" class="page-actions-btn" style="text-decoration: none; padding: 8px 16px;">Create New Product</a>
+                    <a href="{% url 'product-add' %}" class="page-actions-btn" style="text-decoration: none; padding: 8px 16px;">Create New Product</a>
                 </div>
             </div>
             {% else %}

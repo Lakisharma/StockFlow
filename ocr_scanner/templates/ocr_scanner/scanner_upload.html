@@ -31,12 +31,18 @@
                     Supports <strong>JPG, JPEG, PNG, WEBP, and PDF</strong> documents up to 20MB.
                 </p>
 
-                <div style="display: inline-block;">
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <label for="cameraUpload" class="btn-demo" style="padding: 12px 24px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; background-color: var(--primary-color); color: #ffffff;">
+                        <span class="material-icons-round">photo_camera</span>
+                        <span>📸 Take Photo with Camera</span>
+                    </label>
+                    <input type="file" id="cameraUpload" accept="image/*" capture="environment" style="display: none;">
+
                     <label for="documentUpload" class="page-actions-btn" style="padding: 12px 24px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                         <span class="material-icons-round">folder_open</span>
-                        <span>Browse File</span>
+                        <span>Browse File / PDF</span>
                     </label>
-                    <input type="file" name="document" id="documentUpload" accept=".jpg,.jpeg,.png,.webp,.pdf" required style="display: none;">
+                    <input type="file" name="document" id="documentUpload" accept=".jpg,.jpeg,.png,.webp,.pdf,image/*" required style="display: none;">
                 </div>
             </div>
 
@@ -147,6 +153,19 @@ document.addEventListener('DOMContentLoaded', function() {
             previewContainer.style.display = 'block';
         }
     });
+
+    const cameraInput = document.getElementById('cameraUpload');
+    if (cameraInput) {
+        cameraInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileInput.files = this.files;
+                const f = this.files[0];
+                fileNameSpan.textContent = f.name || "camera_photo.jpg";
+                fileSizeSpan.textContent = `(${(f.size / (1024 * 1024)).toFixed(2)} MB)`;
+                previewContainer.style.display = 'block';
+            }
+        });
+    }
 
     clearBtn.addEventListener('click', function() {
         fileInput.value = '';
